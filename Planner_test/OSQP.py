@@ -3,7 +3,7 @@ import numpy as np
 from scipy import sparse
 import matplotlib.pyplot as plt
 
-def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_state, obs_state = []):
+def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_state, dy_obs_in = [], dy_obs_out = []):
     # 权重参数
     # w1: cost_acc
     # w2: cost_jerk
@@ -17,17 +17,17 @@ def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_sta
     N_QP = int(deltT_DP / deltT_QP)
 
     no_collision = False
-    if len(obs_state) == 0:
+    if len(dy_obs_in) == 0:
         no_collision = True
     else:
         for i in range(N_DP):
-            if dp_points_t[i] < obs_state[0][0] and dp_points_t[i+1] > obs_state[0][0]:
+            if dp_points_t[i] < dy_obs_in[0][0] and dp_points_t[i+1] > dy_obs_in[0][0]:
                 start_collision_index = i
-                if dp_points_s[start_collision_index] > obs_state[0][1]:
+                if dp_points_s[start_collision_index] > dy_obs_in[0][1]:
                     speedup = True
                 else:
                     speedup = False
-            elif dp_points_t[i] < obs_state[1][0] and dp_points_t[i+1] > obs_state[1][0]:
+            elif dp_points_t[i] < dy_obs_out[0][0] and dp_points_t[i+1] > dy_obs_out[0][0]:
                 end_collision_index = i
 
 
@@ -150,11 +150,11 @@ def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_sta
                     time += deltT_QP
                     if speedup:
                         bu_1[i*N_QP + j, 0] = 6
-                        bl_1[i*N_QP + j, 0] = dp_points_s[start_collision_index] + \
-                        (obs_state[1][1] - obs_state[0][1]) * time / (obs_state[1][0] - obs_state[0][0])
+                        bl_1[i*N_QP + j, 0] = dy_obs_in[0][1] + \
+                        (dy_obs_out[0][1] - dy_obs_in[0][1]) * time / (dy_obs_out[0][0] - dy_obs_in[0][0])
                     else:
-                        bu_1[i*N_QP + j, 0] = dp_points_s[start_collision_index] + \
-                        (obs_state[1][1] - obs_state[0][1]) * time / (obs_state[1][0] - obs_state[0][0])
+                        bu_1[i*N_QP + j, 0] = dy_obs_in[0][1] + \
+                        (dy_obs_out[0][1] - dy_obs_in[0][1]) * time / (dy_obs_out[0][0] - dy_obs_in[0][0])
                         bl_1[i*N_QP + j, 0] = 0
             A1[i*N_QP + j, i*6 : i * 6 + 6] = np.array([[1, t, t ** 2, t ** 3, t ** 4, t ** 5]])
     # plot_bounds(bl_1, bu_1)

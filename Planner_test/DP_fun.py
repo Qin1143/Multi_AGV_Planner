@@ -19,7 +19,7 @@ def dp_planner(path, dy_obs_in, dy_obs_out, v_max, v_min, a_max, a_min): # dy_ob
     obs_st_s_out_set = [point[1] for point in dy_obs_out]
     obs_st_t_out_set = [point[0] for point in dy_obs_out]
 
-    [w_cost_ref_speed, w_cost_accel, w_cost_obs] = [1, 1, 1]
+    [w_cost_ref_speed, w_cost_accel, w_cost_obs] = [2, 2, 1]
     reference_speed_unlimit = 1
     plan_start_s_dot = 0
 
@@ -31,18 +31,22 @@ def dp_planner(path, dy_obs_in, dy_obs_out, v_max, v_min, a_max, a_min): # dy_ob
     dp_st_cost = np.ones(shape) * math.inf
     # dp_st_s_dot，表示从起点开始到(i,j)点的最优路径的末速度为dp_st_s_dot(i,j)
     dp_st_s_dot = np.zeros(shape)
+    # dp_st_s_dot2，表示从起点开始到(i,j)点的最优路径的末加速度为dp_st_s_dot2(i,j)
+    dp_st_s_dot2 = np.zeros(shape)
     # 需要一个矩阵保持最优路径的前一个节点方便回溯
     # dp_st_node(i, j)表示位置为(i, j)的节点中，最优的上一层节点的行号为dp_st_node(i, j)
     dp_st_node = np.zeros(shape)
 
     # 计算从dp起点到第一列的cost
     for i in range(len(interpolated_s)):
-        dp_st_cost[i, 0] = CalcDpCost(0,0,i,1, obs_st_s_in_set, obs_st_s_out_set, obs_st_t_in_set, obs_st_t_out_set,
+        dp_st_cost[i, 0], cur_s_dot, cur_s_dot2 = CalcDpCost(0,0,i,1, obs_st_s_in_set, obs_st_s_out_set, obs_st_t_in_set, obs_st_t_out_set,
                                       w_cost_ref_speed, reference_speed_unlimit, w_cost_accel, w_cost_obs, plan_start_s_dot, interpolated_s,
                                       interpolated_time, dp_st_s_dot, v_max, v_min, a_max, a_min)
         s_end = interpolated_s[i]
         t_end = interpolated_time[1]
-        dp_st_s_dot[i, 0] = s_end / t_end
+        # dp_st_s_dot[i, 0] = s_end / t_end
+        dp_st_s_dot[i, 0] = cur_s_dot
+        dp_st_s_dot2[i, 0] = cur_s_dot2
 
     # 动态规划主程序
     for j in range(len(interpolated_time) - 1):
@@ -57,7 +61,7 @@ def dp_planner(path, dy_obs_in, dy_obs_out, v_max, v_min, a_max, a_min): # dy_ob
                 pre_row = k
                 pre_col = j - 1
                 # 计算边的代价，其中起点为(k, j-1)，终点为(i, j)
-                cost_temp = CalcDpCost(pre_row, pre_col, cur_row, cur_col, obs_st_s_in_set, obs_st_s_out_set,
+                cost_temp, cur_s_dot, cur_s_dot2 = CalcDpCost(pre_row, pre_col, cur_row, cur_col, obs_st_s_in_set, obs_st_s_out_set,
                                        obs_st_t_in_set, obs_st_t_out_set, w_cost_ref_speed, reference_speed_unlimit, w_cost_accel, w_cost_obs,
                                        plan_start_s_dot, interpolated_s, interpolated_time, dp_st_s_dot, v_max, v_min, a_max, a_min)
                 if cost_temp + dp_st_cost[pre_row, pre_col] < dp_st_cost[cur_row, cur_col]:
@@ -65,12 +69,14 @@ def dp_planner(path, dy_obs_in, dy_obs_out, v_max, v_min, a_max, a_min): # dy_ob
                     # 计算最优的s_dot
                     (s_start, t_start) = (interpolated_s[pre_row], interpolated_time[pre_col + 1])
                     (s_end, t_end) = (interpolated_s[cur_row], interpolated_time[cur_col + 1])
-                    dp_st_s_dot[cur_row, cur_col] = (s_end - s_start) / (t_end - t_start)
+                    # dp_st_s_dot[cur_row, cur_col] = (s_end - s_start) / (t_end - t_start)
+                    dp_st_s_dot[cur_row, cur_col] = cur_s_dot
+                    dp_st_s_dot2[cur_row, cur_col] = cur_s_dot2
                     # 将最短路径的前一个节点的行号记录下来
                     dp_st_node[cur_row, cur_col] = pre_row
     # 输出初始化
     dp_speed_s = np.empty((len(interpolated_time), 1))
-    dp_speed_t = dp_speed_s
+    dp_speed_t = np.empty((len(interpolated_time), 1))
     dp_speed_s[0] = interpolated_s[0]
     dp_speed_t[0] = interpolated_time[0]
     # 找到dp_node_cost 上边界和右边界代价最小的节点
@@ -91,22 +97,27 @@ def dp_planner(path, dy_obs_in, dy_obs_out, v_max, v_min, a_max, a_min): # dy_ob
             min_col = j
     dp_speed_s[min_col+1] = interpolated_s[min_row]
     dp_speed_t[min_col+1] = interpolated_time[min_col+1]
-    print(interpolated_s[min_row])
-    print(dp_speed_s)
+    end_t = interpolated_time[min_col+1]
+    ens_s = interpolated_s[min_row]
+    end_v = dp_st_s_dot[min_row, min_col]
+    end_a = dp_st_s_dot2[min_row, min_col]
+    end_state = (end_t, ens_s, end_v, end_a)
 
     # 反向回溯
-    print("dp_st_node \n", dp_st_node)
-    print("dp_st_cost \n", dp_st_cost)
+
     while min_col != 0:
-        print(min_row, min_col)
+        # print(min_row, min_col)
         pre_row = int(dp_st_node[min_row, min_col])
         pre_col = min_col - 1
         dp_speed_s[pre_col+1] = interpolated_s[pre_row]
         dp_speed_t[pre_col+1] = interpolated_time[pre_col+1]
         min_row = pre_row
         min_col = pre_col
-    print("dp_speed_s \n", dp_speed_s)
-    return dp_speed_s, dp_speed_t
+
+    # print("dp_st_node \n", dp_st_node)
+    # print("dp_st_cost \n", dp_st_cost)
+    # print("dp_speed_s \n", dp_speed_s)
+    return dp_speed_s, dp_speed_t, end_state
 
 def CalcDpCost(
     row_start, col_start, row_end, col_end, obs_st_s_in_set, obs_st_s_out_set, obs_st_t_in_set, obs_st_t_out_set,
@@ -163,7 +174,7 @@ def CalcDpCost(
 
     cost_obs = CalcObsCost(s_start, t_start, s_end, t_end, obs_st_s_in_set, obs_st_s_out_set, obs_st_t_in_set, obs_st_t_out_set, w_cost_obs)
     cost = cost_ref_speed + cost_accel + cost_obs
-    return cost
+    return cost, cur_s_dot, cur_s_dot2
 
 def CalcObsCost(
     s_start,t_start,s_end,t_end,obs_st_s_in_set,obs_st_s_out_set,obs_st_t_in_set,obs_st_t_out_set,w_cost_obs
@@ -217,13 +228,14 @@ def CalcObsCost(
     return obs_cost
 
 def CalcCollisionCost(w_cost_obs, min_dis):
-    if abs(min_dis) < 0.5:
+    obs_l_bound = 0.2
+    obs_u_bound = 1.0
+    if abs(min_dis) < obs_l_bound:
         collision_cost = w_cost_obs
-    elif abs(min_dis) > 0.5 and abs(min_dis) < 1.5:
-    # min_dis = 0.5 collision_cost = w_cost_obs ^ 1;
-    # min_dis = 1.5 collision_cost = w_cost_obs ^ 0 = 1
-        collision_cost = w_cost_obs ** ((0.5 - min_dis) + 1)
-
+    elif abs(min_dis) > obs_l_bound and abs(min_dis) < obs_u_bound:
+    # min_dis = 0.5 collision_cost = w_cost_obs ** 1;
+    # min_dis = 1.5 collision_cost = w_cost_obs ** 0 = 1
+        collision_cost = w_cost_obs ** ((obs_l_bound - min_dis) + obs_u_bound - obs_l_bound)
     else:
         collision_cost = 0
     return collision_cost
