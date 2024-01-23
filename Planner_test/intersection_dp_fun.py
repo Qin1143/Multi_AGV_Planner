@@ -79,8 +79,10 @@ def main():
     # dp_points_s = []
     # start_state = (interpolated_time[0], interpolated_s[0], 0, 0)
     # end_state = (interpolated_time[-1], interpolated_s[-1], 0, 0)
-    dy_obs_in = [(2.5, 3.0)] # (t, s)
-    dy_obs_out = [(3.5, 3.0)] # (t, s)
+    # dy_obs_in = [(2.5, 3.0)] # (t, s)
+    # dy_obs_out = [(3.5, 3.0)] # (t, s)
+    dy_obs_in = []
+    dy_obs_out = []
     # obs_state = []
     # next_state = ()
     # i = 0
@@ -180,7 +182,7 @@ def main():
     t = np.linspace(0, 1, 100)
     # 用于存储所有多项式的值
     values = []
-    times = np.linspace(0, 6, 600)
+    times = np.linspace(0, dp_points_t[-1][0], int(dp_points_t[-1][0])*100)
     # 对于每一组系数
     for coef in coefficients:
         # 计算多项式在给定时间范围内的值
@@ -233,7 +235,7 @@ def main():
     # 将时间字符串添加到文件名中
     filename = f'/home/tony/MAPF/Figures/ST_{time_string}.png'
     # 保存图形
-    plt.savefig(filename)
+    # plt.savefig(filename)
     plt.show()
 
     need_animation = False

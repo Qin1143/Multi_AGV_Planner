@@ -120,7 +120,7 @@ def dp_planner(path, dy_obs_in, dy_obs_out, v_max, v_min, a_max, a_min): # dy_ob
         dp_speed_t[pre_col+1] = interpolated_time[pre_col+1]
         min_row = pre_row
         min_col = pre_col
-
+    print("DP Finished!")
     # print("dp_st_node \n", dp_st_node)
     # print("dp_st_cost \n", dp_st_cost)
     # print("dp_speed_s \n", dp_speed_s)

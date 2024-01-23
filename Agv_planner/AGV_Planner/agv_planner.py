@@ -35,11 +35,12 @@ def main():
         corners_index[i] = corner
         paths[i] = path
 
-    print(corners_index)
+    # print(corners_index)
 
-    Plotting(mission.starts, mission.goals, mission.mission_num, env.y_range, env.x_range, env.obs, paths, corners_index,
-             'Multi_AGV_Planner')
     traj_planner = Traj_Planner(paths, dict(), mission.mission_num, corners_index)
+    Plotting(mission.starts, mission.goals, mission.mission_num, env.y_range, env.x_range, env.obs, paths, corners_index,
+             traj_planner.DP_paths_all, traj_planner.QP_paths_all, traj_planner.S)
+
 
 
 if __name__ == '__main__':
