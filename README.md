@@ -1,5 +1,5 @@
 # Multi_AGV_Planner
-Just about my master works, Including global planner, trajectory planner, decision algorithm and so on. 
+Just about my master works, including global planner, trajectory planner, decision algorithm and so on. 
 
 ST_Astar + DP + QP
 
