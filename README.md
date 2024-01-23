@@ -1,9 +1,9 @@
-## Multi_AGV_Planner
+# Multi_AGV_Planner
 Just about my master works, Including global planner, trajectory planner, decision algorithm and so on. 
 
 ST_Astar + DP + QP
 
-# Slow down to avoid obstacles
+### Slow down to avoid obstacles
 <div align=center>
 <img src=https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/low-speed02.png>
 </div>
@@ -11,7 +11,7 @@ ST_Astar + DP + QP
 <img src=https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/low-speed02.gif>
 </div>
 
-# Accelerate over obstacles
+### Accelerate over obstacles
 <div align=center>
 <img src=https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/high-speed.PNG>
 </div>
