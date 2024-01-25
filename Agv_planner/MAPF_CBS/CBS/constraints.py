@@ -43,13 +43,11 @@ class Constraints:
         # 返回新的Constraints对象
         return new_constraints
 
-    def fork1(self, agent: Agent, obstacle: List[Tuple[int, int]], start: int, end: int) -> 'Constraints':
+    def fork_edge(self, agent: Agent, obstacle: List, times:List) -> 'Constraints':
         agent_constraints_copy = deepcopy(self.agent_constraints)
-        obstacle1 = tuple(obstacle[0])
-        obstacle2 = tuple(obstacle[1])
-        agent_constraints_copy.setdefault(agent, dict()).setdefault(start, set()).add(obstacle1)
-        agent_constraints_copy.setdefault(agent, dict()).setdefault(end, set()).add(obstacle2)
-
+        for i in range(len(times)):
+            obstacle_tuple = tuple(obstacle[i])
+            agent_constraints_copy.setdefault(agent, dict()).setdefault(times[i], set()).add(obstacle_tuple)
         new_constraints = Constraints()
         new_constraints.agent_constraints = agent_constraints_copy
         return new_constraints

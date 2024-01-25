@@ -5,6 +5,7 @@ Email: gavinsweden@gmail.com
 '''
 from typing import Tuple, List, Dict, Set
 from heapq import heappush, heappop
+import matplotlib.pyplot as plt
 import numpy as np
 from scipy.spatial import KDTree
 import math
@@ -88,7 +89,7 @@ class Planner:
                    dynamic_obstacles: Dict[int, Set[Tuple[int, int]]], # 动态障碍物，key为时间戳，value为位置
                    semi_dynamic_obstacles:Dict[int, Set[Tuple[int, int]]] = None,
                    max_iter:int = 500,
-                   debug:bool = False) -> np.ndarray:
+                   debug:bool = False) -> Tuple[np.ndarray, np.ndarray]:
 
         # Prepare dynamic obstacles
         dynamic_obstacles = dict((k, np.array(list(v))) for k, v in dynamic_obstacles.items())
@@ -98,7 +99,7 @@ class Planner:
         # Assume dynamic obstacles are agents with same radius, distance needs to be 2*radius 用于判断给定的位置和时间是否安全
         def safe_dynamic(grid_pos: np.ndarray, time: int) -> bool:
             nonlocal dynamic_obstacles # 非局部变量dynamic_obstacles
-            return all(self.l2(grid_pos, obstacle) > 2 * self.robot_radius
+            return all(self.l2(grid_pos, obstacle[0:2]) > 2 * self.robot_radius
                        for obstacle in dynamic_obstacles.setdefault(time, np.array([])))
 
         # Prepare semi-dynamic obstacles, consider them static after specific timestamp
@@ -122,7 +123,7 @@ class Planner:
         goal = self.grid.snap_to_grid(np.array(goal))
 
         # Initialize the start state
-        s = State(start, 0, 0, self.h(start, goal))
+        s = State(start, math.inf, 0, 0, self.h(start, goal))
 
         open_set = [s]
         closed_set = set()
@@ -138,18 +139,28 @@ class Planner:
             if current_state.pos_equal_to(goal): # 判断当前位置是否与给定终点位置相等
                 if debug:
                     print('STA*: Path found after {0} iterations'.format(iter_))
-                return self.reconstruct_path(came_from, current_state, s)
+                return self.reconstruct_path(came_from, current_state, start=s)
 
             closed_set.add(heappop(open_set))
             epoch = current_state.time + 1
             for neighbour in self.neighbour_table.lookup(current_state.pos):
-                neighbour_state = State(neighbour, epoch, current_state.g_score + 1, self.h(neighbour, goal, current_state, came_from[current_state]))
+                if neighbour[0] == current_state.pos[0] and neighbour[1] == current_state.pos[1]:
+                    angle = math.inf
+                else:
+                    angle = math.atan2(neighbour[1] - current_state.pos[1], neighbour[0] - current_state.pos[0])
+                neighbour_state = State(neighbour, angle, epoch, current_state.g_score + 1, self.h(neighbour, goal, current_state, came_from[current_state]))
                 # Check if visited
                 if neighbour_state in closed_set:
                     continue
 
                 # Avoid obstacles
                 # 判断neighbour是否与静态障碍物和动态障碍物碰撞，以及是否与 semi-dynamic obstacles(半动态障碍物) 碰撞
+                if not safe_dynamic(neighbour, epoch):
+                    print("collision dynamic obstacle, num of iter: ", iter_)
+                # elif not self.safe_static(neighbour):
+                #     print("collision static obstacle, num of iter: ", iter_)
+
+
                 if not self.safe_static(neighbour) \
                    or not safe_dynamic(neighbour, epoch) \
                    or not safe_semi_dynamic(neighbour, epoch):
@@ -160,18 +171,41 @@ class Planner:
                     came_from[neighbour_state] = current_state # state作为key，同时，state作为value
                     heappush(open_set, neighbour_state)
 
-        if debug:
+        if debug and iter_ == max_iter:
+            print('STA*: Maximum iterations reached, no path found.')
+        elif debug:
             print('STA*: Open set is empty, no path found.')
+        self.plot_temp_result(open_set, closed_set, start, goal)
+        # 显示open_set
         return np.array([])
+
+    def plot_temp_result(self, open_set: List[State], closed_set: Set[State], start, goal):
+        open_set_pos = []
+        closed_set_pos = []
+        for state in open_set:
+            open_set_pos.append(state.pos)
+        for state in closed_set:
+            closed_set_pos.append(state.pos)
+        open_set_pos = np.array(open_set_pos)
+        closed_set_pos = np.array(closed_set_pos)
+        plt.scatter(open_set_pos[:, 0], open_set_pos[:, 1], c='r', marker='o')
+        plt.scatter(closed_set_pos[:, 0], closed_set_pos[:, 1], c='b', marker='o')
+        plt.scatter(start[0], start[1], c='g', marker='o')
+        plt.scatter(goal[0], goal[1], c='g', marker='^')
+        plt.show()
 
     '''
     Reconstruct path from A* search result
     '''
-    def reconstruct_path(self, came_from: Dict[State, State], current: State, start: State) -> np.ndarray:
+    def reconstruct_path(self, came_from: Dict[State, State], current: State, start: State) -> Tuple[np.ndarray, np.ndarray]:
         total_path = [current.pos]
+        total_path_angle = [current.theta]
         while current in came_from.keys():
             current = came_from[current]
+            if current.theta == math.inf:
+                current.theta = total_path_angle[-1]
             total_path.append(current.pos)
+            total_path_angle.append(current.theta)
             if current == start:
                 break
-        return np.array(total_path[::-1])
+        return np.array(total_path[::-1]), np.array(total_path_angle[::-1])

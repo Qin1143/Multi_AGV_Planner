@@ -15,7 +15,7 @@ import numpy as np
 
 # The low level planner for CBS is the Space-Time A* planner
 # https://github.com/GavinPHR/Space-Time-AStar
-from STAstar.planner import Planner as STPlanner
+from Agv_planner.STAstar.planner import Planner as STPlanner
 import time
 from .constraint_tree import CTNode
 from .constraints import Constraints
@@ -39,7 +39,7 @@ class Planner:
 
     def plan(self, starts: List[Tuple[int, int]],
              goals: List[Tuple[int, int]],
-             assign: Callable = no_assign,
+             assign: Callable = no_assign, # 是否使用任务分配算法
              max_iter: int = 200,
              low_level_max_iter: int = 100,
              max_process: int = 10,
@@ -118,10 +118,10 @@ class Planner:
             results.append((self.reformat(self.agents, best.solution),))  # 如果agent_i无碰撞，代表CTNode无碰撞，则将best.solution添加到results列表中
             return
         # Calculate new constraints
-        if isinstance(time_of_conflict, int):  # 检查time_of_conflict是否是整数类型
+        if isinstance(time_of_conflict, int):  # 检查time_of_conflict是否是整数类型，如果是，则说明该冲突是顶点冲突
             agent_i_constraint = self.vertex_constraints(best, agent_i, agent_j, time_of_conflict)
             agent_j_constraint = self.vertex_constraints(best, agent_j, agent_i, time_of_conflict)
-        else:
+        else:  # 如果不是，则说明该冲突是边冲突
             agent_i_constraint = self.edge_constraints(best, agent_i, agent_j, time_of_conflict)
             agent_j_constraint = self.edge_constraints(best, agent_j, agent_i, time_of_conflict)
         # Calculate new paths
@@ -194,11 +194,11 @@ class Planner:
         for idx, (point_i, point_j) in enumerate(zip(solution[agent_i], solution[agent_j])):
 
             if self.dist(point_i, point_j) <= 2 * self.robot_radius:  # 如果碰撞
-                return idx
+                return idx  # 顶点冲突返回冲突idx
 
             if idx != 0:
-                if self.dist(last_point[0], point_j) <= 2 * self.robot_radius and self.dist(last_point[1], point_i) <= 2 * self.robot_radius:
-                    return idx, idx - 1
+                if self.dist(last_point[0], point_j) <= 2 * self.robot_radius and self.dist(last_point[1], point_i) <= 2 * self.robot_radius:  # 如果边碰撞，两个机器人互换位置
+                    return idx, idx - 1  # 边冲突返回冲突idx和idx-1，其实idx-1是需要的
 
             last_point = (point_i, point_j)
 
@@ -209,17 +209,35 @@ class Planner:
         return int(np.linalg.norm(point1 - point2, 2))  # L2 norm 计算两点之间的距离
 
     def edge_constraints(self, node: CTNode,
-                              constrained_agent: Agent,
-                              unchanged_agent: Agent,
+                              agent_1: Agent,
+                              agent_2: Agent,
                               time_of_conflict: Tuple[int, int]) -> Constraints:
         print('edge_constraints')
-        contrained_path = node.solution[constrained_agent]  # 受限路径
-        unchanged_path = node.solution[unchanged_agent]  # 不受限路径
-        obstacle1 = unchanged_path[time_of_conflict[0]].tolist()
-        obstacle2 = unchanged_path[time_of_conflict[1]].tolist()
-        pivot = [obstacle1, obstacle2]
-        conflict_end_time = time_of_conflict[1]
-        return node.constraints.fork1(constrained_agent, pivot, time_of_conflict[0], conflict_end_time)
+        agent_1_path = node.solution[agent_1]
+        agent_2_path = node.solution[agent_2]
+        obstacle1 = [agent_1_path[time_of_conflict[0]]]
+        obstacle2 = [agent_2_path[time_of_conflict[0]]]
+        times = [time_of_conflict[0]]
+        print("T:", times, "obs1:", obstacle1, "obs2:", obstacle2)
+        while True:
+            t = times[-1] + 1
+            if self.dist(agent_1_path[t], agent_1_path[t-2]) <= 2:  # agent1转向
+                return node.constraints.fork_edge(agent_1, obstacle1, times)
+            elif self.dist(agent_2_path[t], agent_2_path[t-2]) <= 2:  # agent2转向
+                return node.constraints.fork_edge(agent_2, obstacle2, times)
+            else:
+                obstacle1.append(agent_1_path[t])
+                obstacle2.append(agent_2_path[t])
+                times.append(t)
+                break
+        # contrained_path = node.solution[constrained_agent]  # 受限路径
+        # unchanged_path = node.solution[unchanged_agent]  # 不受限路径
+        # obstacle1 = unchanged_path[time_of_conflict[0]].tolist()
+        # obstacle2 = unchanged_path[time_of_conflict[1]].tolist()
+        # pivot = [obstacle1, obstacle2]
+        # print("pivot:", pivot, "obs1:", obstacle1, "obs2:", obstacle2)  # pivot: [[25, 32], [25, 33]] obs1: [25, 32] obs2: [25, 33]
+        # conflict_end_time = time_of_conflict[1]
+        # return node.constraints.fork1(constrained_agent, pivot, time_of_conflict[0], conflict_end_time)
 
     def vertex_constraints(self, node: CTNode,
                               constrained_agent: Agent,

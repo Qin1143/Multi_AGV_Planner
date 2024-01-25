@@ -16,8 +16,9 @@ class State:
 
     """
 
-    def __init__(self, pos: np.ndarray, time: int,g_score: int, h_score: int):
+    def __init__(self, pos: np.ndarray, theta: float, time: int, g_score: int, h_score: int):
         self.pos = pos
+        self.theta = theta
         self.time = time
         self.g_score = g_score
         self.f_score = g_score + h_score

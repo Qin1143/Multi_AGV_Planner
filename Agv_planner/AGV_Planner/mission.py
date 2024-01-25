@@ -14,8 +14,8 @@ from create_map import get_map_data
 from typing import List, Tuple, Dict, Callable, Set, Any
 
 class Mission:
-    def __init__(self, starts: List[Tuple[float, float]], goals: List[Tuple[float, float]]):
-        self.env = Env()
+    def __init__(self, starts: List[Tuple[int, int]], goals: List[Tuple[int, int]]):
+        self.env = Env(use_benchmark=True)
         self.x_range = self.env.x_range
         self.y_range = self.env.y_range
         if len(starts) != len(goals):
@@ -31,12 +31,11 @@ class Mission:
             self.check_mission_point(self.starts)
             self.check_mission_point(self.goals)
 
-
     def check_mission_point(self, points):
         for point in points:
-            if point[0:2] in self.env.obs:
-                print("mission point in obstacle")
-                exit(0)
+            i = points.index(point)
+            if point in self.env.obs:
+                raise ValueError("mission point", i, " in obstacle")
 
     def generate_random_mission(self, mission_num):
         starts = []
@@ -60,14 +59,14 @@ class Env:
     def __init__(self, use_benchmark=False):
         if use_benchmark:
             self.y_range, self.x_range, self.obs = get_map_data()
-            self.motions = [(-1, 0), (0, 1), (1, 0), (0, -1)]  # 4 neighborhoods
+            # self.motions = [(-1, 0), (0, 1), (1, 0), (0, -1)]  # 4 neighborhoods
             # self.motions = [(-1, 0), (0, 1), (1, 0), (0, -1), (-1, 1), (1, 1), (-1, -1), (-1, 1)]  # 8 neighborhoods
         else:
             self.regenerate_obs = False
             self.x_range = 51  # size of background
             self.y_range = 31
             self.obs = self.generate_obs()
-            self.motions = [(-1, 0), (0, 1), (1, 0), (0, -1)] # 4 neighborhoods
+            # self.motions = [(-1, 0), (0, 1), (1, 0), (0, -1)] # 4 neighborhoods
             # self.motions = [(-1, 0), (0, 1), (1, 0), (0, -1), (-1, 1), (1, 1), (-1, -1), (-1, 1)]  # 8 neighborhoods
 
 

@@ -11,11 +11,12 @@ from create_map import get_map_data
 import numpy as np
 
 class Plotting:
-    def __init__(self, starts, goals, mission_num, height, width, obs, paths: dict, corners_index: dict,
+    def __init__(self, starts, goals, mission_num, height, width, obs, paths: dict, paths_angle: dict,corners_index: dict,
                  DP_paths_all, QP_paths_all, S):
         self.starts, self.goals = starts, goals
         self.height, self.width, self.obs = height, width, obs
         self.paths = paths
+        self.paths_angle = paths_angle
         self.corners_index = corners_index
         cmap = plt.get_cmap("viridis")
         self.mission_num = mission_num
@@ -52,6 +53,13 @@ class Plotting:
             corners_y = [path_y[j] for j in self.corners_index[i]]
             plt.plot(path_x, path_y, linewidth='3', color=self.colors[i], alpha=0.5)
             plt.plot(corners_x, corners_y, 'o', color=self.colors[i], alpha=1)
+
+            # for j in range(len(path_x) - 1):  # 每隔10个点绘制一个箭头
+            #     if j % 10 == 0:  # 只在每隔10个点处绘制箭头
+            #         dx = path_x[j + 1] - path_x[j]
+            #         dy = path_y[j + 1] - path_y[j]
+            #         plt.quiver(path_x[j], path_y[j], dx, dy, angles='xy', scale_units='xy', scale=1,
+            #                    color=self.colors[i])
 
     def plot_show_DP_QP(self, DP_paths_all, QP_paths_all):
         # 展示轨迹

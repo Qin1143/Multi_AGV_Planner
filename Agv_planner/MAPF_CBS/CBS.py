@@ -2,9 +2,9 @@ import math
 import matplotlib.pyplot as plt
 from CBS.planner import Planner
 from CBS.assigner import *
-from create_map import get_map_data
+from Agv_planner.create_map import get_map_data
 import random
-import plotting
+import Agv_planner.MAPF_CBS.plotting as plotting
 
 
 def main():
@@ -45,8 +45,6 @@ def main():
             print("goal point in obstacle")
             exit(0)
 
-    # Starts = [(2, 1), (0, 3)] # +
-    # Goals = [(3, 3), (2, 5)] # +
     path = planner.plan(
         starts=Starts,
         goals=Goals,

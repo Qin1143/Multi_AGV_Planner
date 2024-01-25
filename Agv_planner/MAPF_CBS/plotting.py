@@ -7,7 +7,7 @@ import os
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
-from create_map import get_map_data
+from Agv_planner.create_map import get_map_data
 import numpy as np
 
 class Plotting:
