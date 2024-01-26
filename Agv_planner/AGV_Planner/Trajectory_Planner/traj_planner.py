@@ -10,18 +10,25 @@ from .OSQP import qp_planner_osqp as qp_planner
 import numpy as np
 
 class Traj_Planner:
-    def __init__(self, paths: dict, dy_obs: dict, mission_num: int, corners: dict):
+    def __init__(self, paths: dict, dy_obs: dict, mission_num: int, corners: dict, dp_vertex_constraints: dict, up_dp_bound: dict, low_dp_bound: dict):
         self.paths = paths
         self.S = dict()
         self.dy_obs = dy_obs
         self.mission_num = mission_num
         self.corners = corners
+
         self.DP_paths_s = dict()
         self.DP_paths_t = dict()
+        self.DP_vertex_constraints = dict()
+        self.DP_up_bound = dict()
+        self.DP_low_bound = dict()
+
         self.QP_paths_s = dict()
         self.QP_paths_t = dict()
         self.path_sub = dict()
         [self.v_max, self.v_min, self.a_max, self.a_min] = [3.0, 0.0, 2.0, -2.0]
+
+
         # 将每个轨迹按照转折点分段
         for i in range(self.mission_num):
 
@@ -35,10 +42,19 @@ class Traj_Planner:
             for j in range(len(self.corners[i])//2 + 1):
                 if j == 0:
                     self.path_sub[(i, j)] = self.paths[i][0:self.corners[i][j] +1]
+                    self.DP_vertex_constraints[(i, j)] = dp_vertex_constraints[i][0:self.corners[i][j] +1]
+                    self.DP_up_bound[(i, j)] = up_dp_bound[i][0:self.corners[i][j] +1]
+                    self.DP_low_bound[(i, j)] = low_dp_bound[i][0:self.corners[i][j] +1]
                 elif j == len(self.corners[i])/2:
                     self.path_sub[(i, j)] = self.paths[i][self.corners[i][j*2-1]:]
+                    self.DP_vertex_constraints[(i, j)] = dp_vertex_constraints[i][self.corners[i][j*2-1]:]
+                    self.DP_up_bound[(i, j)] = up_dp_bound[i][self.corners[i][j*2-1]:]
+                    self.DP_low_bound[(i, j)] = low_dp_bound[i][self.corners[i][j*2-1]:]
                 else:
                     self.path_sub[(i, j)] = self.paths[i][self.corners[i][j*2-1]:self.corners[i][j*2] +1]
+                    self.DP_vertex_constraints[(i, j)] = dp_vertex_constraints[i][self.corners[i][j*2-1]:self.corners[i][j*2] +1]
+                    self.DP_up_bound[(i, j)] = up_dp_bound[i][self.corners[i][j*2-1]:self.corners[i][j*2] +1]
+                    self.DP_low_bound[(i, j)] = low_dp_bound[i][self.corners[i][j*2-1]:self.corners[i][j*2] +1]
 
         for i in range(self.mission_num):
             for j in range(len(self.corners[i])//2 + 1):

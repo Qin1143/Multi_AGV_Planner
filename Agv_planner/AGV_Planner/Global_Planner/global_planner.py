@@ -30,6 +30,8 @@ class Planner:
         # Make a lookup table for looking up neighbours of a grid
         self.neighbour_table = NeighbourTable(self.grid.grid)
 
+        self.dynamic_obstacles = None
+
 
     '''
     An admissible and consistent heuristic for A*
@@ -89,18 +91,28 @@ class Planner:
                    dynamic_obstacles: Dict[int, Set[Tuple[int, int]]], # 动态障碍物，key为时间戳，value为位置
                    semi_dynamic_obstacles:Dict[int, Set[Tuple[int, int]]] = None,
                    max_iter:int = 500,
-                   debug:bool = False) -> Tuple[np.ndarray, np.ndarray]:
+                   debug:bool = False) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
 
         # Prepare dynamic obstacles
-        dynamic_obstacles = dict((k, np.array(list(v))) for k, v in dynamic_obstacles.items())
+        self.dynamic_obstacles = dict((k, np.array(list(v))) for k, v in dynamic_obstacles.items())
         # 该函数将动态障碍物（dynamic_obstacles）字典的键值对转换为新的键值对的形式，key保持不变
         # 其中值保留为列表，并使用numpy库的array函数转换为数组形式。最终将转换后的字典赋值给dynamic_obstacles变量。
         # 目的是将values中的列表转换为numpy数组
         # Assume dynamic obstacles are agents with same radius, distance needs to be 2*radius 用于判断给定的位置和时间是否安全
-        def safe_dynamic(grid_pos: np.ndarray, time: int) -> bool:
-            nonlocal dynamic_obstacles # 非局部变量dynamic_obstacles
-            return all(self.l2(grid_pos, obstacle[0:2]) > 2 * self.robot_radius
-                       for obstacle in dynamic_obstacles.setdefault(time, np.array([])))
+        def safe_dynamic(grid_pos: np.ndarray, gride_angle: float, time: int) -> Tuple[bool, bool]:  # 1,是否与动态障碍物绝对安全 2,是否通过轨迹规划解决
+            # nonlocal dynamic_obstacles # 非局部变量dynamic_obstacles
+            for obstacle in self.dynamic_obstacles.setdefault(time, np.array([])):
+                if self.l2(grid_pos, obstacle[0:2]) <= 2 * self.robot_radius:
+                    if abs(gride_angle - obstacle[2]) == math.pi:
+                        return False, False
+                    elif gride_angle == math.inf:
+                        return False, False
+                    else:
+                        return True, True
+
+            return True, False
+            # return all(self.l2(grid_pos, obstacle[0:2]) > 2 * self.robot_radius
+            #            for obstacle in dynamic_obstacles.setdefault(time, np.array([])))
 
         # Prepare semi-dynamic obstacles, consider them static after specific timestamp
         if semi_dynamic_obstacles is None:
@@ -155,16 +167,21 @@ class Planner:
 
                 # Avoid obstacles
                 # 判断neighbour是否与静态障碍物和动态障碍物碰撞，以及是否与 semi-dynamic obstacles(半动态障碍物) 碰撞
-                if not safe_dynamic(neighbour, epoch):
+                safe_dynamic_flag, solve_by_traj = safe_dynamic(neighbour, angle, epoch)
+
+                if not safe_dynamic_flag:
                     print("collision dynamic obstacle, num of iter: ", iter_)
                 # elif not self.safe_static(neighbour):
                 #     print("collision static obstacle, num of iter: ", iter_)
 
 
                 if not self.safe_static(neighbour) \
-                   or not safe_dynamic(neighbour, epoch) \
+                   or not safe_dynamic_flag \
                    or not safe_semi_dynamic(neighbour, epoch):
                     continue
+
+                if solve_by_traj:
+                    neighbour_state.solve_by_traj = True
 
                 # Add to open set
                 if neighbour_state not in open_set:
@@ -194,18 +211,57 @@ class Planner:
         plt.scatter(goal[0], goal[1], c='g', marker='^')
         plt.show()
 
+
+    def check_the_bound(self, current: State, max_itr = 10) -> Tuple[int, int]:
+        up_bound = 0
+        low_bound = 0
+        for i in range(1, max_itr):
+            up_time = current.time + i
+            for obstacle in self.dynamic_obstacles.setdefault(up_time, np.array([])):
+                if np.array_equal(current.pos, obstacle[0:2]):
+                    up_bound = i
+                    break
+        for i in range(1, max_itr):
+            low_time = current.time - i
+            for obstacle in self.dynamic_obstacles.setdefault(low_time, np.array([])):
+                if np.array_equal(current.pos, obstacle[0:2]):
+                    low_bound = -1
+                    break
+        return up_bound, low_bound
+
     '''
     Reconstruct path from A* search result
     '''
-    def reconstruct_path(self, came_from: Dict[State, State], current: State, start: State) -> Tuple[np.ndarray, np.ndarray]:
+    def reconstruct_path(self, came_from: Dict[State, State], current: State, start: State) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+        vertex_constraints = []
+        up_bound_list = []
+        low_bound_list = []
         total_path = [current.pos]
         total_path_angle = [current.theta]
+        up_bound, low_bound = self.check_the_bound(current)
+        up_bound_list.append(up_bound)
+        low_bound_list.append(low_bound)
+        if current.solve_by_traj:
+            vertex_constraints.append(1)
+        else:
+            vertex_constraints.append(0)
+
         while current in came_from.keys():
             current = came_from[current]
+            self.check_the_bound(current)
+            up_bound, low_bound = self.check_the_bound(current)
+            up_bound_list.append(up_bound)
+            low_bound_list.append(low_bound)
             if current.theta == math.inf:
                 current.theta = total_path_angle[-1]
+            if current.solve_by_traj:
+                vertex_constraints.append(1)
+            else:
+                vertex_constraints.append(0)
             total_path.append(current.pos)
             total_path_angle.append(current.theta)
             if current == start:
                 break
-        return np.array(total_path[::-1]), np.array(total_path_angle[::-1])
+        # print("up_bound_list: ", up_bound_list)
+        # print("low_bound_list: ", low_bound_list)
+        return np.array(total_path[::-1]), np.array(total_path_angle[::-1]), np.array(vertex_constraints[::-1]), np.array(up_bound_list[::-1]), np.array(low_bound_list[::-1])

@@ -16,12 +16,13 @@ class State:
 
     """
 
-    def __init__(self, pos: np.ndarray, theta: float, time: int, g_score: int, h_score: int):
+    def __init__(self, pos: np.ndarray, theta: float, time: int, g_score: int, h_score: int, solve_by_traj: bool = False):
         self.pos = pos
         self.theta = theta
         self.time = time
         self.g_score = g_score
         self.f_score = g_score + h_score
+        self.solve_by_traj = solve_by_traj
 
     def __hash__(self) -> int: # ‘__’代表私有函数
         """

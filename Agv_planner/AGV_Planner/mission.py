@@ -35,7 +35,9 @@ class Mission:
         for point in points:
             i = points.index(point)
             if point in self.env.obs:
-                raise ValueError("mission point", i, " in obstacle")
+                raise ValueError("mission point", i, point, " in obstacle")
+            if point[0] < 0 or point[0] > self.x_range or point[1] < 0 or point[1] > self.y_range:
+                raise ValueError("mission point", i, point, " out of range")
 
     def generate_random_mission(self, mission_num):
         starts = []
