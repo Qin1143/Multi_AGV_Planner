@@ -63,15 +63,17 @@ class Plotting:
 
     def plot_show_DP_QP(self, DP_paths_all, QP_paths_all):
         # 展示轨迹
-        plt.figure()
         cmap = plt.get_cmap("viridis")
         colors = [cmap(i) for i in np.linspace(0, 1, self.mission_num)]
         # print(self.mission_num)
         for i in range(self.mission_num):
+            plt.figure()
             Tims = np.arange(len(self.paths[i]))
             plt.plot(Tims, self.S[i], colors[i])
-            plt.plot(Tims, DP_paths_all[i][:, 0], colors[i])
+            plt.plot(DP_paths_all[i][:, 1], DP_paths_all[i][:, 0], colors[i])
             plt.plot(QP_paths_all[i][:, 1], QP_paths_all[i][:, 0], colors[i])
+            # 图例
+            plt.legend(['STAstar', 'DP', 'QP'])
             plt.xlabel('T(s)')
             plt.ylabel('S(m)')
             plt.title('ST_Figure_mission_' + str(i))

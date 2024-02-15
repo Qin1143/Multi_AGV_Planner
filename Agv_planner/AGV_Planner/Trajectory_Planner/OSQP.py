@@ -192,7 +192,7 @@ def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_sta
 
     # Solve problem
     result = prob.solve()
-    print(result)
+    # print(result)
     print("QP Finished!")
     return result.x
 

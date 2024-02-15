@@ -26,6 +26,7 @@ def main():
     low_dp_bound = dict()
     # planner并未对目标点方向进行约束
     for i in range(mission.mission_num):
+        # 在GlobalPlanner中规避edge_constraints，只留下vertex_constraints用于运动规划
         path, path_angle, vertex_constraints, up_bound_list, low_bound_list = planner.plan(
             start=mission.starts[i],
             goal=mission.goals[i],

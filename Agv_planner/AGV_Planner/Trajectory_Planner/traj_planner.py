@@ -59,7 +59,8 @@ class Traj_Planner:
         for i in range(self.mission_num):
             for j in range(len(self.corners[i])//2 + 1):
                 if j == 0:
-                    self.DP_paths_s[(i, j)], self.DP_paths_t[(i, j)], end_state = dp_planner(path=self.path_sub[(i, j)], dy_obs_in=[], dy_obs_out=[],
+                    dy_obs_in, dy_obs_out = self.vertex_cons_2_st(self.DP_vertex_constraints[(i, j)])
+                    self.DP_paths_s[(i, j)], self.DP_paths_t[(i, j)], end_state = dp_planner(path=self.path_sub[(i, j)], dy_obs_in=dy_obs_in, dy_obs_out=dy_obs_out,
                                                        v_max=self.v_max, v_min=self.v_min, a_max=self.a_max, a_min=self.a_min)
                     start_state = (self.DP_paths_t[(i, j)][0, 0], self.DP_paths_s[(i, j)][0, 0], 0, 0)
                     end_state = (end_state[0], end_state[1], 0, 0)
@@ -68,7 +69,8 @@ class Traj_Planner:
                     self.QP_paths_s[(i, j)], self.QP_paths_t[(i, j)] = self.qp_result2fun(osqp_result, self.DP_paths_t[(i, j)])
 
                 elif j == len(self.corners[i])/2:
-                    self.DP_paths_s[(i, j)], self.DP_paths_t[(i, j)], end_state = dp_planner(path=self.path_sub[(i, j)], dy_obs_in=[], dy_obs_out=[],
+                    dy_obs_in, dy_obs_out = self.vertex_cons_2_st(self.DP_vertex_constraints[(i, j)])
+                    self.DP_paths_s[(i, j)], self.DP_paths_t[(i, j)], end_state = dp_planner(path=self.path_sub[(i, j)], dy_obs_in=dy_obs_in, dy_obs_out=dy_obs_out,
                                                        v_max=self.v_max, v_min=self.v_min, a_max=self.a_max, a_min=self.a_min)
                     start_state = (self.DP_paths_t[(i, j)][0, 0], self.DP_paths_s[(i, j)][0, 0], 0, 0)
                     end_state = (end_state[0], end_state[1], 0, 0)
@@ -77,7 +79,8 @@ class Traj_Planner:
                     self.QP_paths_s[(i, j)], self.QP_paths_t[(i, j)] = self.qp_result2fun(osqp_result, self.DP_paths_t[(i, j)])
 
                 else:
-                    self.DP_paths_s[(i, j)], self.DP_paths_t[(i, j)], end_state = dp_planner(path=self.path_sub[(i, j)], dy_obs_in=[], dy_obs_out=[],
+                    dy_obs_in, dy_obs_out = self.vertex_cons_2_st(self.DP_vertex_constraints[(i, j)])
+                    self.DP_paths_s[(i, j)], self.DP_paths_t[(i, j)], end_state = dp_planner(path=self.path_sub[(i, j)], dy_obs_in=dy_obs_in, dy_obs_out=dy_obs_out,
                                                        v_max=self.v_max, v_min=self.v_min, a_max=self.a_max, a_min=self.a_min)
                     start_state = (self.DP_paths_t[(i, j)][0, 0], self.DP_paths_s[(i, j)][0, 0], 0, 0)
                     end_state = (end_state[0], end_state[1], 0, 0)
@@ -88,7 +91,27 @@ class Traj_Planner:
         # print(self.path_sub)
         self.DP_paths_all = self.connect_dp_paths(self.DP_paths_s, self.DP_paths_t)
         self.QP_paths_all = self.connect_qp_paths(self.QP_paths_s, self.QP_paths_t)
+        print(self.QP_paths_all[8])
         # self.plot_show(self.DP_paths_all, self.QP_paths_all)
+
+    def vertex_cons_2_st(self, vertex_cons: List[Tuple[float, float, float, float]]) -> Tuple[List, List]:
+        dy_obs_in = []
+        dy_obs_out = []
+        for index, k in enumerate(vertex_cons[:-1]):
+            if index == 0 and vertex_cons[index] == 1:
+                dy_obs_in.append((index, index))
+            elif index == len(vertex_cons) - 2 and vertex_cons[index+1] == 1:
+                dy_obs_out.append((index, index))
+            elif k == 0 and vertex_cons[index+1] == 1:
+                dy_obs_in.append((index+1, index+1))
+            elif k == 1 and vertex_cons[index+1] == 0:
+                dy_obs_out.append((index, index))
+            else:
+                continue
+        print('dy_obs_in:', dy_obs_in, 'dy_obs_out:', dy_obs_out)
+        return dy_obs_in, dy_obs_out
+
+
 
     def qp_result2fun(self, osqp_result, dp_points_t):
         # 将OSQP的结果转化为函数
@@ -119,7 +142,7 @@ class Traj_Planner:
                     DP = np.column_stack((DP_paths_s[(i, j)], DP_paths_t[(i, j)]))
                     DP_paths_all[i] = DP
                 else:
-                    DP = np.column_stack((DP_paths_s[(i, j)], DP_paths_t[(i, j)])) + DP_paths_all[i][-1]
+                    DP = np.column_stack((DP_paths_s[(i, j)], DP_paths_t[(i, j)])) + DP_paths_all[i][-1] + [0, 1]
                     DP_paths_all[i] = np.concatenate((DP_paths_all[i], DP), axis=0)
         return DP_paths_all
 
@@ -144,7 +167,6 @@ class Traj_Planner:
                     t = np.linspace(QP_paths_all[i][-1, 1], QP_paths_all[i][-1, 1] + 1, 100)
                     s = np.ones(100) * QP_paths_all[i][-1, 0]
                     gap = np.column_stack((s, t))
-                    QP_paths_all[i] = np.concatenate((QP_paths_all[i], QP), axis=0)
                     QP_paths_all[i] = np.concatenate((QP_paths_all[i], gap), axis=0)
         return QP_paths_all
 
