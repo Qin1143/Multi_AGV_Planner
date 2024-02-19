@@ -91,7 +91,7 @@ class Traj_Planner:
         # print(self.path_sub)
         self.DP_paths_all = self.connect_dp_paths(self.DP_paths_s, self.DP_paths_t)
         self.QP_paths_all = self.connect_qp_paths(self.QP_paths_s, self.QP_paths_t)
-        print(self.QP_paths_all[8])
+        # print(self.QP_paths_all[8])
         # self.plot_show(self.DP_paths_all, self.QP_paths_all)
 
     def vertex_cons_2_st(self, vertex_cons: List[Tuple[float, float, float, float]]) -> Tuple[List, List]:

@@ -51,7 +51,7 @@ class Planner:
             h2 = Planner.h2(s_ll.pos, s_l.pos, start)
             return int(w1*h1 + w2*h2)
     @staticmethod
-    def h2(s_ll, s_l, s):
+    def h2(s_ll, s_l, s):  # h2函数的出现使得角度变化更为谨慎和平稳
         # Create vectors [s_last to s] and [s to s_next]
         vector_1 = [s_l[0] - s_ll[0], s_l[1] - s_ll[1]]
         vector_2 = [s[0] - s_l[0], s[1] - s_l[1]]
@@ -89,9 +89,9 @@ class Planner:
     def plan(self, start: Tuple[int, int],
                    goal: Tuple[int, int],
                    dynamic_obstacles: Dict[int, Set[Tuple[int, int]]], # 动态障碍物，key为时间戳，value为位置
-                   semi_dynamic_obstacles:Dict[int, Set[Tuple[int, int]]] = None,
-                   max_iter:int = 500,
-                   debug:bool = False) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+                   semi_dynamic_obstacles: Dict[int, Set[Tuple[int, int]]] = None,
+                   max_iter: int = 500,
+                   debug: bool = False) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
 
         # Prepare dynamic obstacles
         self.dynamic_obstacles = dict((k, np.array(list(v))) for k, v in dynamic_obstacles.items())
@@ -161,15 +161,16 @@ class Planner:
                 else:
                     angle = math.atan2(neighbour[1] - current_state.pos[1], neighbour[0] - current_state.pos[0])
                 neighbour_state = State(neighbour, angle, epoch, current_state.g_score + 1, self.h(neighbour, goal, current_state, came_from[current_state]))
-                # Check if visited
+                # Check if visited 一个包含x，y，t的哈希值
                 if neighbour_state in closed_set:
+                    # print("neighbour_state is visited")
                     continue
 
                 # Avoid obstacles
                 # 判断neighbour是否与静态障碍物和动态障碍物碰撞，以及是否与 semi-dynamic obstacles(半动态障碍物) 碰撞
                 safe_dynamic_flag, solve_by_traj = safe_dynamic(neighbour, angle, epoch)
 
-                if not safe_dynamic_flag:
+                if not safe_dynamic_flag and debug:
                     print("collision dynamic obstacle, num of iter: ", iter_)
                 # elif not self.safe_static(neighbour):
                 #     print("collision static obstacle, num of iter: ", iter_)
@@ -183,10 +184,24 @@ class Planner:
                 if solve_by_traj:
                     neighbour_state.solve_by_traj = True
 
-                # Add to open set
-                if neighbour_state not in open_set:
+                # 查找neighbour_state在open_set中的索引
+                index = open_set.index(neighbour_state) if neighbour_state in open_set else None
+
+                # 如果neighbour_state在open_set中
+                if index is not None:
+                    last_neighbour_state = open_set[index]
+                    if neighbour_state.f_score < last_neighbour_state.f_score:
+                        open_set.pop(index)
+                        came_from[neighbour_state] = current_state
+                        heappush(open_set, neighbour_state)
+                    else:
+                        continue
+                # 如果neighbour_state不在open_set中
+                else:
                     came_from[neighbour_state] = current_state # state作为key，同时，state作为value
                     heappush(open_set, neighbour_state)
+                # else:
+                #     print("neighbour_state is in the open_set")
 
         if debug and iter_ == max_iter:
             print('STA*: Maximum iterations reached, no path found.')

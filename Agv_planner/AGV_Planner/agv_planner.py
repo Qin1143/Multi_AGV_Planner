@@ -9,6 +9,8 @@ from Global_Planner.global_planner import Planner
 from mission import Mission, Env
 from plotting import Plotting
 from Trajectory_Planner.traj_planner import Traj_Planner
+from tqdm import tqdm
+
 
 
 def main():
@@ -25,19 +27,21 @@ def main():
     up_dp_bound = dict()
     low_dp_bound = dict()
     # planner并未对目标点方向进行约束
-    for i in range(mission.mission_num):
+    for i in tqdm(range(mission.mission_num), desc="Global_Planner"):  # desc确认进度条的名称
         # 在GlobalPlanner中规避edge_constraints，只留下vertex_constraints用于运动规划
         path, path_angle, vertex_constraints, up_bound_list, low_bound_list = planner.plan(
             start=mission.starts[i],
             goal=mission.goals[i],
             dynamic_obstacles=dynamic_obstacles,
             max_iter=1000,
-            debug=True
+            debug=False
         )
         dp_vertex_constraints[i] = vertex_constraints
         up_dp_bound[i] = up_bound_list
         low_dp_bound[i] = low_bound_list
-        print("mission:", i, "vertex_constraints: ", vertex_constraints)
+        # print("mission:", i, "vertex_constraints: ", vertex_constraints)
+
+        # 计算轨迹的拐点
         corner = []
         for j in range(1,len(path)-1):
             if math.sqrt(math.pow(path[j-1][0] - path[j+1][0], 2) + math.pow(path[j-1][1] - path[j+1][1], 2)) != 2:
@@ -51,7 +55,7 @@ def main():
                 dynamic_obstacles[k] = set()
             dynamic_obstacles[k].add((path[k][0], path[k][1], path_angle[k]))
 
-    print(dynamic_obstacles)
+    # print(dynamic_obstacles)
 
 
     # print(corners_index)

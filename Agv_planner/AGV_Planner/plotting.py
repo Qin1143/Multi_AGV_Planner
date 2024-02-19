@@ -70,10 +70,10 @@ class Plotting:
             plt.figure()
             Tims = np.arange(len(self.paths[i]))
             plt.plot(Tims, self.S[i], colors[i])
-            plt.plot(DP_paths_all[i][:, 1], DP_paths_all[i][:, 0], colors[i])
-            plt.plot(QP_paths_all[i][:, 1], QP_paths_all[i][:, 0], colors[i])
+            # plt.plot(DP_paths_all[i][:, 1], DP_paths_all[i][:, 0], colors[i])
+            # plt.plot(QP_paths_all[i][:, 1], QP_paths_all[i][:, 0], colors[i])
             # 图例
-            plt.legend(['STAstar', 'DP', 'QP'])
+            # plt.legend(['STAstar', 'DP', 'QP'])
             plt.xlabel('T(s)')
             plt.ylabel('S(m)')
             plt.title('ST_Figure_mission_' + str(i))
