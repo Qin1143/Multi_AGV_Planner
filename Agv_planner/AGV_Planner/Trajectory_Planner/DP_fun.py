@@ -187,7 +187,7 @@ def CalcObsCost(
     s_start,t_start,s_end,t_end,obs_st_s_in_set,obs_st_s_out_set,obs_st_t_in_set,obs_st_t_out_set,w_cost_obs
 ):
     '''
-    该函数将计算障碍物代价
+    该函数将计算当前点与多个障碍物的代价
     :param s_start: 边的起点
     :param t_start: 边的起点
     :param s_end: 边的终点

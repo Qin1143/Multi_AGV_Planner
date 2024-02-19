@@ -5,11 +5,16 @@ from scipy import sparse
 import matplotlib.pyplot as plt
 
 def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_state, dy_obs_in = [], dy_obs_out = []):
+    # dy_obs_in为st坐标 其他的st图内的坐标为ts
+    # 目前QP可以处理多障碍物，但是只能处理顺次出现的障碍物，不能处理st中有时间交叉的障碍物
     # 权重参数
     # w1: cost_acc
     # w2: cost_jerk
     # w3: cost_ref_s
     [w1, w2, w3] = [1, 1, 3]
+    start_collision_index = dict()
+    end_collision_index = dict()
+    speedup = dict()
 
     # DP和QP的离散时间和阶段数量
     deltT_DP = 1
@@ -22,14 +27,15 @@ def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_sta
         no_collision = True
     else:
         for i in range(N_DP):
-            if dp_points_t[i] < dy_obs_in[0][0] and dp_points_t[i+1] > dy_obs_in[0][0]:
-                start_collision_index = i
-                if dp_points_s[start_collision_index] > dy_obs_in[0][1]:
-                    speedup = True
-                else:
-                    speedup = False
-            elif dp_points_t[i] < dy_obs_out[0][0] and dp_points_t[i+1] > dy_obs_out[0][0]:
-                end_collision_index = i
+            for j in range(len(dy_obs_in)):  # j代表第j个障碍物段
+                if dp_points_t[i] < dy_obs_in[j][1] and dp_points_t[i+1] > dy_obs_in[j][1]:
+                    start_collision_index[j] = i
+                    if dp_points_s[start_collision_index] > dy_obs_in[j][0]:
+                        speedup[j] = True
+                    else:
+                        speedup[j] = False
+                elif dp_points_t[i] < dy_obs_out[j][1] and dp_points_t[i+1] > dy_obs_out[j][1]:
+                    end_collision_index[j] = i
 
 
 
@@ -143,19 +149,25 @@ def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_sta
                 bu_1[i*N_QP + j, 0] = end_state[1]
                 bl_1[i*N_QP + j, 0] = 0
             else:
-                if i < start_collision_index or i > end_collision_index:
+                for collision_index in start_collision_index.keys():
+                    if i >= start_collision_index[collision_index] and i <= end_collision_index[collision_index]:
+                        is_collision = True
+                        break
+                    else:
+                        is_collision = False
+                if is_collision == False:
                     bu_1[i*N_QP + j, 0] = end_state[1]
                     bl_1[i*N_QP + j, 0] = 0
                     time = 0
                 else:
                     time += deltT_QP
-                    if speedup:
+                    if speedup[collision_index]:
                         bu_1[i*N_QP + j, 0] = end_state[1]
-                        bl_1[i*N_QP + j, 0] = dy_obs_in[0][1] + \
-                        (dy_obs_out[0][1] - dy_obs_in[0][1]) * time / (dy_obs_out[0][0] - dy_obs_in[0][0])
+                        bl_1[i*N_QP + j, 0] = dy_obs_in[collision_index][0] + \
+                        (dy_obs_out[collision_index][0] - dy_obs_in[collision_index][0]) * time / (dy_obs_out[collision_index][1] - dy_obs_in[collision_index][1])
                     else:
-                        bu_1[i*N_QP + j, 0] = dy_obs_in[0][1] + \
-                        (dy_obs_out[0][1] - dy_obs_in[0][1]) * time / (dy_obs_out[0][0] - dy_obs_in[0][0])
+                        bu_1[i*N_QP + j, 0] = dy_obs_in[0][0] + \
+                        (dy_obs_out[collision_index][0] - dy_obs_in[collision_index][0]) * time / (dy_obs_out[collision_index][1] - dy_obs_in[collision_index][1])
                         bl_1[i*N_QP + j, 0] = 0
             A1[i*N_QP + j, i*6 : i * 6 + 6] = np.array([[1, t, t ** 2, t ** 3, t ** 4, t ** 5]])
     # plot_bounds(bl_1, bu_1)
