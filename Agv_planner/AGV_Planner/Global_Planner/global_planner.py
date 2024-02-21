@@ -102,7 +102,7 @@ class Planner:
         def safe_dynamic(grid_pos: np.ndarray, gride_angle: float, time: int) -> Tuple[bool, bool]:  # 1,是否与动态障碍物绝对安全 2,是否通过轨迹规划解决
             # nonlocal dynamic_obstacles # 非局部变量dynamic_obstacles
             for obstacle in self.dynamic_obstacles.setdefault(time, np.array([])):
-                if self.l2(grid_pos, obstacle[0:2]) <= 2 * self.robot_radius:
+                if self.l2(grid_pos, obstacle[0:2]) <= 4 * self.robot_radius:
                     if abs(gride_angle - obstacle[2]) == math.pi:
                         return False, False
                     elif gride_angle == math.inf:
@@ -227,9 +227,9 @@ class Planner:
         plt.show()
 
 
-    def check_the_bound(self, current: State, max_itr = 10) -> Tuple[int, int]:
-        up_bound = 0
-        low_bound = 0
+    def check_the_bound(self, current: State, max_itr = 11) -> Tuple[int, int]:
+        up_bound = max_itr - 1
+        low_bound = - max_itr + 1
         for i in range(1, max_itr):
             up_time = current.time + i
             for obstacle in self.dynamic_obstacles.setdefault(up_time, np.array([])):
@@ -240,7 +240,7 @@ class Planner:
             low_time = current.time - i
             for obstacle in self.dynamic_obstacles.setdefault(low_time, np.array([])):
                 if np.array_equal(current.pos, obstacle[0:2]):
-                    low_bound = -1
+                    low_bound = -i
                     break
         return up_bound, low_bound
 
@@ -263,8 +263,7 @@ class Planner:
 
         while current in came_from.keys():
             current = came_from[current]
-            self.check_the_bound(current)
-            up_bound, low_bound = self.check_the_bound(current)
+            up_bound, low_bound = self.check_the_bound(current)  # 检查当前状态的上下障碍物边界
             up_bound_list.append(up_bound)
             low_bound_list.append(low_bound)
             if current.theta == math.inf:
@@ -279,4 +278,17 @@ class Planner:
                 break
         # print("up_bound_list: ", up_bound_list)
         # print("low_bound_list: ", low_bound_list)
-        return np.array(total_path[::-1]), np.array(total_path_angle[::-1]), np.array(vertex_constraints[::-1]), np.array(up_bound_list[::-1]), np.array(low_bound_list[::-1])
+        return (np.array(total_path[::-1]), np.array(total_path_angle[::-1]),
+                np.array(vertex_constraints[::-1]), np.array(up_bound_list[::-1]), np.array(low_bound_list[::-1]))  # 翻转数组并返回
+
+    def find_nearest_obstacle(self, current: State) -> np.ndarray:
+        range_num = 7
+        nearest_obstacle = np.zeros((1, 7))
+        for i in range(1, range_num):
+            cur_time = current.time - 3 + i
+            cur_state = State(current.pos, math.inf, cur_time, 0, 0)
+            if cur_state in self.dynamic_obstacles.setdefault(cur_time, np.array([])):
+                nearest_obstacle[0, i] = 1
+            else:
+                nearest_obstacle[0, i] = 0
+        return nearest_obstacle

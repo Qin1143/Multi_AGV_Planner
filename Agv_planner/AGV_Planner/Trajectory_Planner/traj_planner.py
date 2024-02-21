@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 from .DP_fun import dp_planner
 from .OSQP import qp_planner_osqp as qp_planner
 import numpy as np
+from tqdm import tqdm
 
 class Traj_Planner:
     def __init__(self, paths: dict, dy_obs: dict, mission_num: int, corners: dict, dp_vertex_constraints: dict, up_dp_bound: dict, low_dp_bound: dict):
@@ -56,9 +57,19 @@ class Traj_Planner:
                     self.DP_up_bound[(i, j)] = up_dp_bound[i][self.corners[i][j*2-1]:self.corners[i][j*2] +1]
                     self.DP_low_bound[(i, j)] = low_dp_bound[i][self.corners[i][j*2-1]:self.corners[i][j*2] +1]
 
-        for i in range(self.mission_num):
+        for i in tqdm(range(self.mission_num), desc="Local_Planner"):
             for j in range(len(self.corners[i])//2 + 1):
-                if j == 0:
+                if j == 0:  #
+                    dy_obs_in, dy_obs_out = self.vertex_cons_2_st(self.DP_vertex_constraints[(i, j)])
+                    self.DP_paths_s[(i, j)], self.DP_paths_t[(i, j)], end_state = dp_planner(path=self.path_sub[(i, j)], dy_obs_in=dy_obs_in, dy_obs_out=dy_obs_out,
+                                                       v_max=self.v_max, v_min=self.v_min, a_max=self.a_max, a_min=self.a_min)
+                    start_state = (self.DP_paths_t[(i, j)][0, 0], self.DP_paths_s[(i, j)][0, 0], 0, 0)  # t, s, v, a
+                    end_state = (end_state[0], end_state[1], 0, 0)  # t, s, v, a
+                    osqp_result = qp_planner(self.DP_paths_t[(i, j)], self.DP_paths_s[(i, j)], self.v_max, self.v_min, start_state=start_state,
+                                          end_state=end_state, dy_obs_in=[], dy_obs_out=[])
+                    self.QP_paths_s[(i, j)], self.QP_paths_t[(i, j)] = self.qp_result2fun(osqp_result, self.DP_paths_t[(i, j)])
+
+                elif j == len(self.corners[i])/2:  # 最后一段
                     dy_obs_in, dy_obs_out = self.vertex_cons_2_st(self.DP_vertex_constraints[(i, j)])
                     self.DP_paths_s[(i, j)], self.DP_paths_t[(i, j)], end_state = dp_planner(path=self.path_sub[(i, j)], dy_obs_in=dy_obs_in, dy_obs_out=dy_obs_out,
                                                        v_max=self.v_max, v_min=self.v_min, a_max=self.a_max, a_min=self.a_min)
@@ -68,17 +79,7 @@ class Traj_Planner:
                                           end_state=end_state, dy_obs_in=[], dy_obs_out=[])
                     self.QP_paths_s[(i, j)], self.QP_paths_t[(i, j)] = self.qp_result2fun(osqp_result, self.DP_paths_t[(i, j)])
 
-                elif j == len(self.corners[i])/2:
-                    dy_obs_in, dy_obs_out = self.vertex_cons_2_st(self.DP_vertex_constraints[(i, j)])
-                    self.DP_paths_s[(i, j)], self.DP_paths_t[(i, j)], end_state = dp_planner(path=self.path_sub[(i, j)], dy_obs_in=dy_obs_in, dy_obs_out=dy_obs_out,
-                                                       v_max=self.v_max, v_min=self.v_min, a_max=self.a_max, a_min=self.a_min)
-                    start_state = (self.DP_paths_t[(i, j)][0, 0], self.DP_paths_s[(i, j)][0, 0], 0, 0)
-                    end_state = (end_state[0], end_state[1], 0, 0)
-                    osqp_result = qp_planner(self.DP_paths_t[(i, j)], self.DP_paths_s[(i, j)], self.v_max, self.v_min, start_state=start_state,
-                                          end_state=end_state, dy_obs_in=[], dy_obs_out=[])
-                    self.QP_paths_s[(i, j)], self.QP_paths_t[(i, j)] = self.qp_result2fun(osqp_result, self.DP_paths_t[(i, j)])
-
-                else:
+                else:  # 中间段
                     dy_obs_in, dy_obs_out = self.vertex_cons_2_st(self.DP_vertex_constraints[(i, j)])
                     self.DP_paths_s[(i, j)], self.DP_paths_t[(i, j)], end_state = dp_planner(path=self.path_sub[(i, j)], dy_obs_in=dy_obs_in, dy_obs_out=dy_obs_out,
                                                        v_max=self.v_max, v_min=self.v_min, a_max=self.a_max, a_min=self.a_min)

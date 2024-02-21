@@ -12,7 +12,7 @@ import numpy as np
 
 class Plotting:
     def __init__(self, starts, goals, mission_num, height, width, obs, paths: dict, paths_angle: dict,corners_index: dict,
-                 DP_paths_all, QP_paths_all, S):
+                 DP_paths_all, QP_paths_all, S, up_dp_bound, low_dp_bound):
         self.starts, self.goals = starts, goals
         self.height, self.width, self.obs = height, width, obs
         self.paths = paths
@@ -23,9 +23,13 @@ class Plotting:
         self.DP_paths_all = DP_paths_all
         self.QP_paths_all = QP_paths_all
         self.S = S
+        self.up_dp_bound = up_dp_bound
+        self.low_dp_bound = low_dp_bound
+
         self.colors = [cmap(i) for i in np.linspace(0, 1, self.mission_num)]
         self.multi_plot_2D(self.paths)
         self.plot_show_DP_QP(self.DP_paths_all, self.QP_paths_all)
+
 
     def multi_plot_2D(self, paths):
         self.plot_grid()
@@ -63,17 +67,19 @@ class Plotting:
 
     def plot_show_DP_QP(self, DP_paths_all, QP_paths_all):
         # 展示轨迹
-        cmap = plt.get_cmap("viridis")
-        colors = [cmap(i) for i in np.linspace(0, 1, self.mission_num)]
+        # cmap = plt.get_cmap("viridis")
+        # colors = [cmap(i) for i in np.linspace(0, 1, self.mission_num)]
         # print(self.mission_num)
         for i in range(self.mission_num):
             plt.figure()
             Tims = np.arange(len(self.paths[i]))
-            plt.plot(Tims, self.S[i], colors[i])
-            # plt.plot(DP_paths_all[i][:, 1], DP_paths_all[i][:, 0], colors[i])
-            # plt.plot(QP_paths_all[i][:, 1], QP_paths_all[i][:, 0], colors[i])
+            plt.plot(Tims, self.S[i])#, colors[i])
+            plt.plot(DP_paths_all[i][:, 1], DP_paths_all[i][:, 0])#, colors[i])
+            plt.plot(QP_paths_all[i][:, 1], QP_paths_all[i][:, 0])#, colors[i])
+            plt.plot(Tims, self.up_dp_bound[i] + self.S[i], 'r')
+            plt.plot(Tims, self.low_dp_bound[i] + self.S[i], 'r')
             # 图例
-            # plt.legend(['STAstar', 'DP', 'QP'])
+            plt.legend(['STAstar', 'DP', 'QP'])
             plt.xlabel('T(s)')
             plt.ylabel('S(m)')
             plt.title('ST_Figure_mission_' + str(i))

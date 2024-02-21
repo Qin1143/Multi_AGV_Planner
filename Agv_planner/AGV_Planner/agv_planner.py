@@ -36,6 +36,9 @@ def main():
             max_iter=1000,
             debug=False
         )
+        # print("dynamic_obstacles", dynamic_obstacles)
+        # print("up_bound_list", up_bound_list)
+        # print("low_bound_list", low_bound_list)
         dp_vertex_constraints[i] = vertex_constraints
         up_dp_bound[i] = up_bound_list
         low_dp_bound[i] = low_bound_list
@@ -50,8 +53,8 @@ def main():
         paths[i] = path
         paths_angle[i] = path_angle
 
-        for k in range(len(path)):
-            if k not in dynamic_obstacles:
+        for k in range(len(path)):  # k相当于时间t
+            if k not in dynamic_obstacles:  # 如果dynamic_obstacles中没有时间层k
                 dynamic_obstacles[k] = set()
             dynamic_obstacles[k].add((path[k][0], path[k][1], path_angle[k]))
 
@@ -62,7 +65,7 @@ def main():
 
     traj_planner = Traj_Planner(paths, dict(), mission.mission_num, corners_index, dp_vertex_constraints, up_dp_bound, low_dp_bound)
     Plotting(mission.starts, mission.goals, mission.mission_num, env.y_range, env.x_range, env.obs, paths, paths_angle,
-             corners_index, traj_planner.DP_paths_all, traj_planner.QP_paths_all, traj_planner.S)
+             corners_index, traj_planner.DP_paths_all, traj_planner.QP_paths_all, traj_planner.S, up_dp_bound, low_dp_bound)
 
 
 
