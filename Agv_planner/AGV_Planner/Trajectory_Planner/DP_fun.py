@@ -108,7 +108,7 @@ def dp_planner(path, dy_obs_in, dy_obs_out, v_max, v_min, a_max, a_min): # dy_ob
     ens_s = interpolated_s[min_row]
     end_v = dp_st_s_dot[min_row, min_col]
     end_a = dp_st_s_dot2[min_row, min_col]
-    end_state = (end_t, ens_s, end_v, end_a)
+    end_state = (int(end_t), int(ens_s), end_v, end_a)
 
     # 反向回溯
 

@@ -11,6 +11,7 @@ def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_sta
     # w1: cost_acc
     # w2: cost_jerk
     # w3: cost_ref_s
+    global is_collision
     [w1, w2, w3] = [1, 1, 3]
     start_collision_index = dict()
     end_collision_index = dict()
@@ -26,16 +27,42 @@ def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_sta
     if len(dy_obs_in) == 0:
         no_collision = True
     else:
-        for i in range(N_DP):
-            for j in range(len(dy_obs_in)):  # j代表第j个障碍物段
-                if dp_points_t[i] < dy_obs_in[j][1] and dp_points_t[i+1] > dy_obs_in[j][1]:
-                    start_collision_index[j] = i
-                    if dp_points_s[start_collision_index] > dy_obs_in[j][0]:
-                        speedup[j] = True
+        for i in range(len(dy_obs_in)):
+            for j in range(len(dp_points_t)):
+                if dp_points_t[j] <= dy_obs_in[i][1] < dp_points_t[j + 1] and i not in start_collision_index.keys():  # 第i个障碍物段的起始时间
+                    start_collision_index[i] = j
+                    if dp_points_s[j] > dy_obs_in[i][0]:
+                        speedup[i] = True
                     else:
-                        speedup[j] = False
-                elif dp_points_t[i] < dy_obs_out[j][1] and dp_points_t[i+1] > dy_obs_out[j][1]:
-                    end_collision_index[j] = i
+                        speedup[i] = False
+
+                if dp_points_t[j-1] < dy_obs_out[i][1] <= dp_points_t[j] and i not in end_collision_index.keys():  # 第i个障碍物段的终止时间
+                    end_collision_index[i] = j
+
+                if j == len(dp_points_t) - 1 and i not in end_collision_index.keys():  # 如果障碍物段的终止时间在最后一个DP段的时间之后
+                    end_collision_index[i] = j
+
+                if i in start_collision_index.keys() and i in end_collision_index.keys():
+                    break
+
+
+
+        # for i in range(N_DP):
+        #     for j in range(len(dy_obs_in)):  # j代表第j个障碍物段
+        #         if dp_points_t[i] < dy_obs_in[j][1] <= dp_points_t[i + 1]:
+        #             start_collision_index[j] = i
+        #             if dp_points_s[i] > dy_obs_in[j][0]:
+        #                 speedup[j] = True
+        #             else:
+        #                 speedup[j] = False
+        #         if dp_points_t[i - 1] <= dy_obs_out[j][1] < dp_points_t[i]:
+        #             end_collision_index[j] = i
+
+    # print("dp_points_t", dp_points_t)
+    # print("dy_obs_in", dy_obs_in)
+    # print("dy_obs_out", dy_obs_out)
+    # print("start_collision_index", start_collision_index)
+    # print("end_collision_index", end_collision_index)
 
 
 
@@ -149,12 +176,12 @@ def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_sta
                 bu_1[i*N_QP + j, 0] = end_state[1]
                 bl_1[i*N_QP + j, 0] = 0
             else:
+                is_collision = False
                 for collision_index in start_collision_index.keys():
-                    if i >= start_collision_index[collision_index] and i <= end_collision_index[collision_index]:
+                    if start_collision_index[collision_index] <= i <= end_collision_index[collision_index]:
                         is_collision = True
                         break
-                    else:
-                        is_collision = False
+
                 if is_collision == False:
                     bu_1[i*N_QP + j, 0] = end_state[1]
                     bl_1[i*N_QP + j, 0] = 0
@@ -200,7 +227,7 @@ def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_sta
     prob = osqp.OSQP()
 
     # Setup workspace and change alpha parameter
-    prob.setup(P, q, A, bl, bu)
+    prob.setup(P, q, A, bl, bu)#, verbose=False)
 
     # Solve problem
     result = prob.solve()

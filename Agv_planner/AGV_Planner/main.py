@@ -12,12 +12,83 @@ from Trajectory_Planner.traj_planner import Traj_Planner
 from Trajectory_Planner.DP_fun import dp_planner
 from Trajectory_Planner.OSQP import qp_planner_osqp as qp_planner
 from tqdm import tqdm
+import time
 
 
-def vertex_cons_2_st(vertex_cons: List[Tuple[float, float, float, float]]) -> Tuple[List, List]:
+def qp_st_2_xy(path_sub, qp_paths_s, qp_paths_t, corners_index, mission_num):
+    """
+    将qp的st坐标转化为xy坐标
+    """
+    final_x = dict()
+    final_y = dict()
+    for i in range(mission_num):
+        for j in range(len(corners_index[i]) // 2 + 1):
+            if j == 0:
+                point_start = path_sub[(i, j)][0]
+                point_end = path_sub[(i, j)][-1]
+                # print("point_start", point_start, "point_end", point_end)
+                if point_start[0] == point_end[0]:
+                    if point_end[1] < point_start[1]:
+                        y = np.ones(len(qp_paths_s[(i, j)])) * point_start[1] - qp_paths_s[(i, j)]
+                    else:
+                        y = np.ones(len(qp_paths_s[(i, j)])) * point_start[1] + qp_paths_s[(i, j)]
+                    x = np.ones(len(qp_paths_s[(i, j)])) * point_start[0]
+                else:
+                    if point_end[0] < point_start[0]:
+                        x = np.ones(len(qp_paths_s[(i, j)])) * point_start[0] - qp_paths_s[(i, j)]
+                    else:
+                        x = np.ones(len(qp_paths_s[(i, j)])) * point_start[0] + qp_paths_s[(i, j)]
+                    y = np.ones(len(qp_paths_s[(i, j)])) * point_start[1]
+                x = np.append(x, np.ones(100) * x[-1])
+                y = np.append(y, np.ones(100) * y[-1])
+
+            elif j == len(corners_index[i]) / 2:
+                point_start = path_sub[(i, j)][0]
+                point_end = path_sub[(i, j)][-1]
+                # print("point_start", point_start, "point_end", point_end)
+                if point_start[0] == point_end[0]:
+                    if point_end[1] < point_start[1]:
+                        y = np.append(y, np.ones(len(qp_paths_s[(i, j)])) * point_start[1] - qp_paths_s[(i, j)])
+                    else:
+                        y = np.append(y, np.ones(len(qp_paths_s[(i, j)])) * point_start[1] + qp_paths_s[(i, j)])
+                    x = np.append(x, np.ones(len(qp_paths_s[(i, j)])) * point_start[0])
+                else:
+                    if point_end[0] < point_start[0]:
+                        x = np.append(x, np.ones(len(qp_paths_s[(i, j)])) * point_start[0] - qp_paths_s[(i, j)])
+                    else:
+                        x = np.append(x, np.ones(len(qp_paths_s[(i, j)])) * point_start[0] + qp_paths_s[(i, j)])
+                    y = np.append(y, np.ones(len(qp_paths_s[(i, j)])) * point_start[1])
+
+
+            else:
+                point_start = path_sub[(i, j)][0]
+                point_end = path_sub[(i, j)][-1]
+                # print("point_start", point_start, "point_end", point_end)
+                if point_start[0] == point_end[0]:
+                    if point_end[1] < point_start[1]:
+                        y = np.append(y, np.ones(len(qp_paths_s[(i, j)])) * point_start[1] - qp_paths_s[(i, j)])
+                    else:
+                        y = np.append(y, np.ones(len(qp_paths_s[(i, j)])) * point_start[1] + qp_paths_s[(i, j)])
+                    x = np.append(x, np.ones(len(qp_paths_s[(i, j)])) * point_start[0])
+                else:
+                    if point_end[0] < point_start[0]:
+                        x = np.append(x, np.ones(len(qp_paths_s[(i, j)])) * point_start[0] - qp_paths_s[(i, j)])
+                    else:
+                        x = np.append(x, np.ones(len(qp_paths_s[(i, j)])) * point_start[0] + qp_paths_s[(i, j)])
+                    y = np.append(y, np.ones(len(qp_paths_s[(i, j)])) * point_start[1])
+                x = np.append(x, np.ones(100) * x[-1])
+                y = np.append(y, np.ones(100) * y[-1])
+
+        final_x[i] = x
+        final_y[i] = y
+    return final_x, final_y
+
+
+
+def vertex_cons_2_st(vertex_cons) -> Tuple[List, List]:
     dy_obs_in = []
     dy_obs_out = []
-    for index, k in enumerate(vertex_cons[:-1]):
+    for index, k in enumerate(vertex_cons[:-1]):  # 遍历vertex_cons，但不包括最后一个元素
         if index == 0 and vertex_cons[index] == 1:
             dy_obs_in.append((index, index))
         elif index == len(vertex_cons) - 2 and vertex_cons[index + 1] == 1:
@@ -106,8 +177,10 @@ def dynamic_obstacles_dp(dp_paths_all, path, angle, s, dynamic_obstacles):
 
 
 def main():
-    starts = [(5, 5)]#, (20, 15), (10, 70), (15, 35), (15, 20), (15, 15), (10, 15), (25, 80), (15, 15), (20, 55)]
-    goals = [(160, 80)]#, (160, 60), (155, 15), (150, 75), (160, 80), (150, 20), (155, 70), (160, 70), (165, 25), (165, 10)]
+    # starts = [(25, 80)]
+    # goals = [(160, 70)]
+    starts = [(5, 5), (20, 15), (10, 70), (15, 35), (15, 20), (15, 10), (10, 15), (25, 80), (15, 15), (20, 55)]
+    goals = [(160, 80), (160, 60), (155, 15), (150, 75), (160, 80), (150, 20), (155, 70), (160, 70), (165, 25), (165, 10)]
     env = Env(use_benchmark=True)
     mission = Mission(starts, goals)
     planner = Planner(grid_size=1, robot_radius=0.4, static_obstacles=env.obs)
@@ -132,8 +205,8 @@ def main():
     low_dp_bound_sub = dict()
 
     [v_max, v_min, a_max, a_min] = [3.0, 0.0, 2.0, -2.0]
-
-    for i in tqdm(range(mission.mission_num), desc="Global_Planner"):  # desc确认进度条的名称
+    start_time = time.time()
+    for i in tqdm(range(mission.mission_num), desc="Motion_Planner"):  # desc确认进度条的名称
         # 在GlobalPlanner中规避edge_constraints，只留下vertex_constraints用于运动规划
         path, path_angle, vertex_constraints, up_bound_list, low_bound_list = planner.plan(
             start=mission.starts[i],
@@ -168,6 +241,7 @@ def main():
                 s[i][k] = s[i][k - 1] + 1
 
         for j in range(len(corners_index[i]) // 2 + 1):
+            # print("corners_index[i]:", len(corners_index[i]), "j:", j)
             if j == 0:
                 path_sub[(i, j)] = paths[i][0:corners_index[i][j] + 1]
                 dp_vertex_constraints_sub[(i, j)] = dp_vertex_constraints[i][0:corners_index[i][j] + 1]
@@ -197,8 +271,9 @@ def main():
                                                                                a_min=a_min)
                 start_state = (dp_paths_t[(i, j)][0, 0], dp_paths_s[(i, j)][0, 0], 0, 0)  # t, s, v, a
                 end_state = (end_state[0], end_state[1], 0, 0)  # t, s, v, a
+                # print("end_state", end_state)
                 osqp_result = qp_planner(dp_paths_t[(i, j)], dp_paths_s[(i, j)], v_max, v_min,
-                                         start_state=start_state, end_state=end_state, dy_obs_in=[], dy_obs_out=[])
+                                         start_state=start_state, end_state=end_state, dy_obs_in=[], dy_obs_out=[])  # dy_obs_in=dy_obs_in, dy_obs_out=dy_obs_out)
                 qp_paths_s[(i, j)], qp_paths_t[(i, j)] = qp_result2fun(osqp_result, dp_paths_t[(i, j)])
 
             elif j == len(corners_index[i]) / 2:  # 最后一段
@@ -212,6 +287,7 @@ def main():
                                                                                a_min=a_min)
                 start_state = (dp_paths_t[(i, j)][0, 0], dp_paths_s[(i, j)][0, 0], 0, 0)
                 end_state = (end_state[0], end_state[1], 0, 0)
+                # print("end_state", end_state)
                 osqp_result = qp_planner(dp_paths_t[(i, j)], dp_paths_s[(i, j)], v_max, v_min,
                                          start_state=start_state, end_state=end_state, dy_obs_in=[], dy_obs_out=[])
                 qp_paths_s[(i, j)], qp_paths_t[(i, j)] = qp_result2fun(osqp_result, dp_paths_t[(i, j)])
@@ -227,16 +303,24 @@ def main():
                                                                                a_min=a_min)
                 start_state = (dp_paths_t[(i, j)][0, 0], dp_paths_s[(i, j)][0, 0], 0, 0)
                 end_state = (end_state[0], end_state[1], 0, 0)
+                # print("end_state", end_state)
                 osqp_result = qp_planner(dp_paths_t[(i, j)], dp_paths_s[(i, j)], v_max, v_min,
                                          start_state=start_state, end_state=end_state, dy_obs_in=[], dy_obs_out=[])
                 qp_paths_s[(i, j)], qp_paths_t[(i, j)] = qp_result2fun(osqp_result, dp_paths_t[(i, j)])
         dp_paths_all[i] = connect_dp_paths(dp_paths_s, dp_paths_t, i, corners_index)  # (s, t)
         qp_paths_all[i] = connect_qp_paths(qp_paths_s, qp_paths_t, i, corners_index)
-
         dynamic_obstacles = dynamic_obstacles_dp(dp_paths_all[i], path, path_angle, s[i], dynamic_obstacles)
 
+    end_time = time.time()
+    print("Time:", end_time - start_time)
+
+
+    # print("dp_paths_all[4]:", dp_paths_all[4])
+    # print("dp_vertex_constraints[4]:", dp_vertex_constraints[4])
+    final_x, final_y = qp_st_2_xy(path_sub, qp_paths_s, qp_paths_t, corners_index, mission.mission_num)
+    # print("final_y[7]:", final_x[7])
     Plotting(mission.starts, mission.goals, mission.mission_num, env.y_range, env.x_range, env.obs, paths, paths_angle,
-             corners_index, dp_paths_all, qp_paths_all, s, up_dp_bound, low_dp_bound)
+             corners_index, dp_paths_all, qp_paths_all, s, up_dp_bound, low_dp_bound, dp_vertex_constraints, final_x, final_y)
 
 if __name__ == '__main__':
     main()

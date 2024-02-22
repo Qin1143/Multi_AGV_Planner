@@ -107,10 +107,12 @@ class Planner:
                         return False, False
                     elif gride_angle == math.inf:
                         return False, False
+                    elif abs(gride_angle - obstacle[2]) == 0:
+                        return False, False
                     else:
                         return True, True
 
-            return True, False
+            return True, False  # safe_dynamic_flag, solve_by_traj
             # return all(self.l2(grid_pos, obstacle[0:2]) > 2 * self.robot_radius
             #            for obstacle in dynamic_obstacles.setdefault(time, np.array([])))
 
