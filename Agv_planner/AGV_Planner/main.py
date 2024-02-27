@@ -15,76 +15,70 @@ from tqdm import tqdm
 import time
 
 
-def qp_st_2_xy(path_sub, qp_paths_s, qp_paths_t, corners_index, mission_num):
+def qp_st_2_xy(path_sub, qp_paths_s, qp_paths_t, corners, mission_num):
     """
     将qp的st坐标转化为xy坐标
     """
     final_x = dict()
     final_y = dict()
     for i in range(mission_num):
-        for j in range(len(corners_index[i]) + 1):
+        for j in range(len(corners[i]) + 1):
             if j == 0:
                 point_start = path_sub[(i, j)][0]
                 point_end = path_sub[(i, j)][-1]
                 # print("point_start", point_start, "point_end", point_end)
                 if point_start[0] == point_end[0] and point_start[1] == point_end[1]:  # 如果起点和终点重合,等待段
-                    x = np.ones(len(qp_paths_s[(i, j)])) * point_start[0]
-                    y = np.ones(len(qp_paths_s[(i, j)])) * point_start[1]
-                elif point_start[0] == point_end[0]:  # 如果x坐标相等, 说明是竖直方向移动
+                    x = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0]
+                    y = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[1]
+                    print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape)
+                    continue
+                if point_start[0] == point_end[0]:  # 如果x坐标相等, 说明是竖直方向移动
                     if point_end[1] < point_start[1]:  # 向下移动
-                        y = np.ones(len(qp_paths_s[(i, j)])) * point_start[1] - qp_paths_s[(i, j)]
+                        y = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[1] - qp_paths_s[(i, j)]
                     else:  # 向上移动
-                        y = np.ones(len(qp_paths_s[(i, j)])) * point_start[1] + qp_paths_s[(i, j)]
-                    x = np.ones(len(qp_paths_s[(i, j)])) * point_start[0]
+                        y = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[1] + qp_paths_s[(i, j)]
+                    x = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0]
+                    print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape)
                 else:   # 如果y坐标相等, 说明是水平方向移动
                     if point_end[0] < point_start[0]:  # 向左移动
-                        x = np.ones(len(qp_paths_s[(i, j)])) * point_start[0] - qp_paths_s[(i, j)]
+                        x = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0] - qp_paths_s[(i, j)]
                     else:  # 向右移动
-                        x = np.ones(len(qp_paths_s[(i, j)])) * point_start[0] + qp_paths_s[(i, j)]
-                    y = np.ones(len(qp_paths_s[(i, j)])) * point_start[1]
-
-            # elif j == len(corners_index[i]):
-            #     point_start = path_sub[(i, j)][0]
-            #     point_end = path_sub[(i, j)][-1]
-            #     # print("point_start", point_start, "point_end", point_end)
-            #     if point_start[0] == point_end[0] and point_start[1] == point_end[1]:  # 如果起点和终点重合,等待段
-            #         x = np.ones(len(qp_paths_s[(i, j)])) * point_start[0]
-            #         y = np.ones(len(qp_paths_s[(i, j)])) * point_start[1]
-            #     elif point_start[0] == point_end[0]:
-            #         if point_end[1] < point_start[1]:
-            #             y = np.append(y, np.ones(len(qp_paths_s[(i, j)])) * point_start[1] - qp_paths_s[(i, j)])
-            #         else:
-            #             y = np.append(y, np.ones(len(qp_paths_s[(i, j)])) * point_start[1] + qp_paths_s[(i, j)])
-            #         x = np.append(x, np.ones(len(qp_paths_s[(i, j)])) * point_start[0])
-            #     else:
-            #         if point_end[0] < point_start[0]:
-            #             x = np.append(x, np.ones(len(qp_paths_s[(i, j)])) * point_start[0] - qp_paths_s[(i, j)])
-            #         else:
-            #             x = np.append(x, np.ones(len(qp_paths_s[(i, j)])) * point_start[0] + qp_paths_s[(i, j)])
-            #         y = np.append(y, np.ones(len(qp_paths_s[(i, j)])) * point_start[1])
-
+                        x = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0] + qp_paths_s[(i, j)]
+                    y = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[1]
+                    print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape)
             else:
                 point_start = path_sub[(i, j)][0]
                 point_end = path_sub[(i, j)][-1]
                 # print("point_start", point_start, "point_end", point_end)
                 if point_start[0] == point_end[0] and point_start[1] == point_end[1]:  # 如果起点和终点重合,等待段
-                    x = np.ones(len(qp_paths_s[(i, j)])) * point_start[0]
-                    y = np.ones(len(qp_paths_s[(i, j)])) * point_start[1]
-                elif point_start[0] == point_end[0]:
+                    x_sub = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0]
+                    y_sub = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[1]
+                    x = np.append(x, x_sub)
+                    y = np.append(y, y_sub)
+                    print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape, "len_x_sub", x_sub.shape, "len_y_sub", y_sub.shape)
+                    continue
+                if point_start[0] == point_end[0]:
                     if point_end[1] < point_start[1]:
-                        y = np.append(y, np.ones(len(qp_paths_s[(i, j)])) * point_start[1] - qp_paths_s[(i, j)])
+                        y_sub = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[1] - qp_paths_s[(i, j)]
+                        y = np.append(y, y_sub)
                     else:
-                        y = np.append(y, np.ones(len(qp_paths_s[(i, j)])) * point_start[1] + qp_paths_s[(i, j)])
-                    x = np.append(x, np.ones(len(qp_paths_s[(i, j)])) * point_start[0])
+                        y_sub = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[1] + qp_paths_s[(i, j)]
+                        y = np.append(y, y_sub)
+                    x = np.append(x, np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0])
+                    print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape, "len_y_sub:", y_sub.shape)
                 else:
                     if point_end[0] < point_start[0]:
-                        x = np.append(x, np.ones(len(qp_paths_s[(i, j)])) * point_start[0] - qp_paths_s[(i, j)])
+                        x_sub = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0] - qp_paths_s[(i, j)]
+                        x = np.append(x, x_sub)
                     else:
-                        x = np.append(x, np.ones(len(qp_paths_s[(i, j)])) * point_start[0] + qp_paths_s[(i, j)])
-                    y = np.append(y, np.ones(len(qp_paths_s[(i, j)])) * point_start[1])
+                        x_sub = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0] + qp_paths_s[(i, j)]
+                        x = np.append(x, x_sub)
+                    y = np.append(y, np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[1])
+                    print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape, "len_x_sub:", x_sub.shape)
 
         final_x[i] = x
         final_y[i] = y
+        print("Mission:", i, "final_x:", len(final_x[i]), "final_Y：", len(final_y[i]))
     return final_x, final_y
 
 
@@ -175,11 +169,11 @@ def check_wait_segment(path):
 
 
 def main():
-    # starts = []
-    # goals = []
+    starts = []
+    goals = []
 
-    # starts = [(95, 30), (167, 39), (146, 47), (29, 69), (133, 34), (62, 1), (48, 76), (95, 10), (45, 37), (37, 72)]
-    # goals = [(17, 60), (67, 42), (21, 52), (165, 25), (164, 77), (141, 73), (18, 4), (47, 21), (15, 70), (108, 68)]
+    # starts = [(145, 50), (124, 13), (59, 66), (105, 81), (158, 33), (60, 50), (57, 50), (25, 78), (132, 79), (28, 25)]
+    # goals = [(84, 52), (98, 70), (106, 81), (13, 28), (54, 73), (168, 68), (113, 45), (162, 27), (67, 74), (65, 78)]
 
     starts = [(5, 5), (20, 15), (10, 70), (15, 35), (15, 20), (15, 10), (10, 15), (25, 80), (15, 15), (20, 55)]  # origin
     goals = [(160, 80), (160, 60), (155, 15), (150, 75), (160, 80), (150, 20), (155, 70), (160, 70), (165, 25), (165, 10)]

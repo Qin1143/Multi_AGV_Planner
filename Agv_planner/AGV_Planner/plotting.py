@@ -30,14 +30,14 @@ class Plotting:
         self.final_x = final_x
         self.final_y = final_y
         self.colors = [cmap(i) for i in np.linspace(0, 1, self.mission_num)]
-        self.multi_plot_2D_static(self.paths)
-        # self.multi_plot_2D_dynamic()
-        self.plot_show_DP_QP(self.DP_paths_all, self.QP_paths_all)
+        # self.multi_plot_2D_static(self.paths)
+        self.multi_plot_2D_dynamic()
+        # self.plot_show_DP_QP(self.DP_paths_all, self.QP_paths_all)
 
     def multi_plot_2D_dynamic(self):
         # self.plot_grid()
         self.plot_dynamic_paths()
-        plt.show()
+        # plt.show()
 
     def plot_dynamic_paths(self):
         """
@@ -122,10 +122,10 @@ class Plotting:
         for i in range(self.mission_num):
             path_x = [point[0] for point in paths[i]]
             path_y = [point[1] for point in paths[i]]
-            corners_x = [path_x[j] for j in self.corners_index[i]]
-            corners_y = [path_y[j] for j in self.corners_index[i]]
+            # corners_x = [path_x[j] for j in self.corners_index[i]]
+            # corners_y = [path_y[j] for j in self.corners_index[i]]
             plt.plot(path_x, path_y, linewidth='3', color=self.colors[i], alpha=0.5)
-            plt.plot(corners_x, corners_y, 'o', color=self.colors[i], alpha=1)
+            # plt.plot(corners_x, corners_y, 'o', color=self.colors[i], alpha=1)
 
             # for j in range(len(path_x) - 1):  # 每隔10个点绘制一个箭头
             #     if j % 10 == 0:  # 只在每隔10个点处绘制箭头
