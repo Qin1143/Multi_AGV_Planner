@@ -14,15 +14,18 @@ from create_map import get_map_data
 from typing import List, Tuple, Dict, Callable, Set, Any
 
 class Mission:
-    def __init__(self, starts: List[Tuple[int, int]], goals: List[Tuple[int, int]]):
+    def __init__(self, starts: List[Tuple[int, int]], goals: List[Tuple[int, int]], mission_num: int = 10):
         self.env = Env(use_benchmark=True)
         self.x_range = self.env.x_range
         self.y_range = self.env.y_range
         if len(starts) != len(goals):
             raise ValueError("The number of starts and goals should be the same.")
         elif len(starts) == 0:
-            self.mission_num = 5
+            self.mission_num = mission_num
             self.starts, self.goals = self.generate_random_mission(self.mission_num)
+            # print("missions:", self.mission_num)
+            print("starts:", self.starts)
+            print("goals:", self.goals)
             print("Generate random mission successfully")
         else:
             self.starts = starts
@@ -30,6 +33,9 @@ class Mission:
             self.mission_num = len(starts)
             self.check_mission_point(self.starts)
             self.check_mission_point(self.goals)
+
+    def calculate_distance(self, start, goal):
+        return math.sqrt((goal[0] - start[0]) ** 2 + (goal[1] - start[1]) ** 2)
 
     def check_mission_point(self, points):
         for point in points:
@@ -43,14 +49,15 @@ class Mission:
         starts = []
         goals = []
         num = 0
-        while num == mission_num:
+        while num != mission_num:
             start_x = random.randint(1, self.x_range-2)
             start_y = random.randint(1, self.y_range-2)
             goal_x = random.randint(1, self.x_range-2)
             goal_y = random.randint(1, self.y_range-2)
             start = (start_x, start_y)
             goal = (goal_x, goal_y)
-            if start in self.env.obs or goal in self.env.obs:
+            if start in self.env.obs or goal in self.env.obs or start == goal\
+                    or self.calculate_distance(start, goal) < 40 or start in starts or goal in goals:
                 continue
             starts.append(start)
             goals.append(goal)

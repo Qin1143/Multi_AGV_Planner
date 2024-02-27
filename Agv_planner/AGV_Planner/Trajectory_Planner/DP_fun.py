@@ -2,7 +2,13 @@ import math
 import numpy as np
 from typing import List, Tuple, Dict, Callable, Set, Any
 
-def dp_planner(path, dy_obs_in, dy_obs_out, v_max, v_min, a_max, a_min): # dy_obs: t, s
+def dp_planner(path, dy_obs_in, dy_obs_out, v_max, v_min, a_max, a_min, dp_up_bound, dp_low_bound): # dy_obs: t, s
+    '''
+    该函数将使用动态规划算法计算路径的速度曲线
+    '''
+    print("dy_obs_in:", len(dy_obs_in), dy_obs_in,"dy_obs_out:", len(dy_obs_out), dy_obs_out)
+    if len(dy_obs_in) != len(dy_obs_out):
+        raise ValueError("The number of dy_obs_in and dy_obs_out should be the same.")
     time_points = np.arange(len(path))
     displacement_points = []
     dis = 0
@@ -29,9 +35,11 @@ def dp_planner(path, dy_obs_in, dy_obs_out, v_max, v_min, a_max, a_min): # dy_ob
     reference_speed_unlimit = 1
     plan_start_s_dot = 0
 
-    resolution = 1
+    resolution = 1  # 目前只能是1，不可调节
     interpolated_time = np.arange(time_points[0], time_points[-1] + resolution, resolution)
     interpolated_s = np.arange(displacement_points[0], displacement_points[-1] + resolution, resolution)
+    # print("interpolated_s:", interpolated_s)
+    # print("interpolated_time:", interpolated_time)
     shape = (len(interpolated_s), len(interpolated_time) - 1) # 行数为s-1，列数为t-1，去除起点
     # 声明st代价矩阵，表示从起点开始到(i,j)点的最小代价为dp_st_cost(i,j)
     dp_st_cost = np.ones(shape) * math.inf
@@ -42,9 +50,15 @@ def dp_planner(path, dy_obs_in, dy_obs_out, v_max, v_min, a_max, a_min): # dy_ob
     # 需要一个矩阵保持最优路径的前一个节点方便回溯
     # dp_st_node(i, j)表示位置为(i, j)的节点中，最优的上一层节点的行号为dp_st_node(i, j)
     dp_st_node = np.zeros(shape)
-
+    # print("interpolated_s:", interpolated_s)
+    # print("dp_up_bound:", dp_up_bound)
+    # print("dp_low_bound:", dp_low_bound)
     # 计算从dp起点到第一列的cost
     for i in range(len(interpolated_s)):
+
+        if interpolated_s[i] > interpolated_s[1] + dp_up_bound[1] or interpolated_s[i] <  interpolated_s[1] + dp_low_bound[1]:
+            continue
+
         dp_st_cost[i, 0], cur_s_dot, cur_s_dot2 = CalcDpCost(0,0, i,0, obs_st_s_in_set, obs_st_s_out_set, obs_st_t_in_set, obs_st_t_out_set,
                                       w_cost_ref_speed, reference_speed_unlimit, w_cost_accel, w_cost_obs, plan_start_s_dot, interpolated_s,
                                       interpolated_time, dp_st_s_dot, v_max, v_min, a_max, a_min)
@@ -59,10 +73,16 @@ def dp_planner(path, dy_obs_in, dy_obs_out, v_max, v_min, a_max, a_min): # dy_ob
             # 当前为i行j列
             cur_row = i
             cur_col = j
+            if interpolated_s[i] > interpolated_s[cur_col + 1] + dp_up_bound[cur_col + 1] or interpolated_s[i] < interpolated_s[cur_col + 1] + dp_low_bound[cur_col + 1]:
+                continue
+
             # 遍历前一列
             for k in range(len(interpolated_s)):
                 pre_row = k
                 pre_col = j - 1
+                if interpolated_s[i] > interpolated_s[cur_col + 1] + dp_up_bound[cur_col + 1] or interpolated_s[i] < interpolated_s[cur_col + 1] + dp_low_bound[cur_col + 1]:
+                    continue
+
                 # 计算边的代价，其中起点为(k, j-1)，终点为(i, j)
                 cost_temp, cur_s_dot, cur_s_dot2 = CalcDpCost(pre_row, pre_col, cur_row, cur_col, obs_st_s_in_set, obs_st_s_out_set,
                                        obs_st_t_in_set, obs_st_t_out_set, w_cost_ref_speed, reference_speed_unlimit, w_cost_accel, w_cost_obs,
@@ -225,9 +245,10 @@ def CalcObsCost(
             V2 = obs_point_2 - obs_point_1
             V3 = obs_point_2 - cur_point
 
+            epsilon = 1e-7
             d1 = np.linalg.norm(V1)
             d2 = np.linalg.norm(V3)
-            d3 = np.linalg.norm(np.cross(V1, V2)) / np.linalg.norm(V2)
+            d3 = np.linalg.norm(np.cross(V1, V2)) / (np.linalg.norm(V2) + epsilon)
 
             if np.dot(V1, V2) * np.dot(V1, V3) >= 0:
                 min_dis = min(d1, d2)

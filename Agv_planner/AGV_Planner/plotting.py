@@ -30,9 +30,9 @@ class Plotting:
         self.final_x = final_x
         self.final_y = final_y
         self.colors = [cmap(i) for i in np.linspace(0, 1, self.mission_num)]
-        # self.multi_plot_2D_static(self.paths)
-        self.multi_plot_2D_dynamic()
-        # self.plot_show_DP_QP(self.DP_paths_all, self.QP_paths_all)
+        self.multi_plot_2D_static(self.paths)
+        # self.multi_plot_2D_dynamic()
+        self.plot_show_DP_QP(self.DP_paths_all, self.QP_paths_all)
 
     def multi_plot_2D_dynamic(self):
         # self.plot_grid()

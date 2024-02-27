@@ -28,7 +28,17 @@ def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_sta
         no_collision = True
     else:
         for i in range(len(dy_obs_in)):
-            for j in range(len(dp_points_t)):
+            for j in range(len(dp_points_t)-1):
+
+                # if dy_obs_in[i][1] == dy_obs_out[i][1] and dp_points_t[j] == dy_obs_in[i][1]:
+                #     start_collision_index[i] = j
+                #     end_collision_index[i] = j
+                #     if dp_points_s[j] > dy_obs_in[i][0]:
+                #         speedup[i] = True
+                #     else:
+                #         speedup[i] = False
+                #     continue
+
                 if dp_points_t[j] <= dy_obs_in[i][1] < dp_points_t[j + 1] and i not in start_collision_index.keys():  # 第i个障碍物段的起始时间
                     start_collision_index[i] = j
                     if dp_points_s[j] > dy_obs_in[i][0]:
@@ -189,13 +199,21 @@ def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_sta
                 else:
                     time += deltT_QP
                     if speedup[collision_index]:
-                        bu_1[i*N_QP + j, 0] = end_state[1]
-                        bl_1[i*N_QP + j, 0] = dy_obs_in[collision_index][0] + \
-                        (dy_obs_out[collision_index][0] - dy_obs_in[collision_index][0]) * time / (dy_obs_out[collision_index][1] - dy_obs_in[collision_index][1])
+                        if dy_obs_out[collision_index][0] - dy_obs_in[collision_index][0] == 0:
+                            bu_1[i*N_QP + j, 0] = end_state[1]
+                            bl_1[i*N_QP + j, 0] = dy_obs_out[collision_index][0]
+                        else:
+                            bu_1[i*N_QP + j, 0] = end_state[1]
+                            bl_1[i*N_QP + j, 0] = dy_obs_in[collision_index][0] + \
+                            (dy_obs_out[collision_index][0] - dy_obs_in[collision_index][0]) * time / (dy_obs_out[collision_index][1] - dy_obs_in[collision_index][1])
                     else:
-                        bu_1[i*N_QP + j, 0] = dy_obs_in[0][0] + \
-                        (dy_obs_out[collision_index][0] - dy_obs_in[collision_index][0]) * time / (dy_obs_out[collision_index][1] - dy_obs_in[collision_index][1])
-                        bl_1[i*N_QP + j, 0] = 0
+                        if dy_obs_out[collision_index][0] - dy_obs_in[collision_index][0] == 0:
+                            bu_1[i*N_QP + j, 0] = dy_obs_out[collision_index][0]
+                            bl_1[i*N_QP + j, 0] = 0
+                        else:
+                            bu_1[i*N_QP + j, 0] = dy_obs_in[0][0] + \
+                            (dy_obs_out[collision_index][0] - dy_obs_in[collision_index][0]) * time / (dy_obs_out[collision_index][1] - dy_obs_in[collision_index][1])
+                            bl_1[i*N_QP + j, 0] = 0
             A1[i*N_QP + j, i*6 : i * 6 + 6] = np.array([[1, t, t ** 2, t ** 3, t ** 4, t ** 5]])
     # plot_bounds(bl_1, bu_1)
 

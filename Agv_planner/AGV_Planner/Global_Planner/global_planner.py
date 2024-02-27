@@ -107,14 +107,23 @@ class Planner:
                         return False, False
                     elif gride_angle == math.inf:
                         return False, False
-                    elif abs(gride_angle - obstacle[2]) == 0:
-                        return False, False
+                    # elif abs(gride_angle - obstacle[2]) == 0:
+                    #     return False, False
                     else:
                         return True, True
 
             return True, False  # safe_dynamic_flag, solve_by_traj
             # return all(self.l2(grid_pos, obstacle[0:2]) > 2 * self.robot_radius
             #            for obstacle in dynamic_obstacles.setdefault(time, np.array([])))
+
+        def safe_wait_dynamic(current_pos: np.ndarray, next_pose,time: int) -> bool:
+            for obstacle in self.dynamic_obstacles.setdefault(time, np.array([])):
+                if self.l2(current_pos, obstacle[0:2]) <= 2 * self.robot_radius:
+                    return False
+            for obstacle in self.dynamic_obstacles.setdefault(time+1, np.array([])):
+                if self.l2(next_pose, obstacle[0:2]) <= 2 * self.robot_radius:
+                    return False
+            return True
 
         # Prepare semi-dynamic obstacles, consider them static after specific timestamp
         if semi_dynamic_obstacles is None:
@@ -137,7 +146,7 @@ class Planner:
         goal = self.grid.snap_to_grid(np.array(goal))
 
         # Initialize the start state
-        s = State(start, math.inf, 0, 0, self.h(start, goal))
+        s = State(start, 666, 0, 0, self.h(start, goal))
 
         open_set = [s]
         closed_set = set()
@@ -162,7 +171,13 @@ class Planner:
                     angle = math.inf
                 else:
                     angle = math.atan2(neighbour[1] - current_state.pos[1], neighbour[0] - current_state.pos[0])
+
                 neighbour_state = State(neighbour, angle, epoch, current_state.g_score + 1, self.h(neighbour, goal, current_state, came_from[current_state]))
+
+                # if angle != current_state.theta and current_state.theta != math.inf and angle != math.inf:
+                #     if safe_wait_dynamic(current_state.pos, neighbour_state.pos, epoch) == False:
+                #         continue
+
                 # Check if visited 一个包含x，y，t的哈希值
                 if neighbour_state in closed_set:
                     # print("neighbour_state is visited")
@@ -268,7 +283,7 @@ class Planner:
             up_bound, low_bound = self.check_the_bound(current)  # 检查当前状态的上下障碍物边界
             up_bound_list.append(up_bound)
             low_bound_list.append(low_bound)
-            if current.theta == math.inf:
+            if current.theta == 666:  # 为起点赋予角度值
                 current.theta = total_path_angle[-1]
             if current.solve_by_traj:
                 vertex_constraints.append(1)
