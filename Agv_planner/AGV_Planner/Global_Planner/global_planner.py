@@ -107,8 +107,8 @@ class Planner:
                         return False, False
                     elif gride_angle == math.inf:
                         return False, False
-                    elif abs(gride_angle - obstacle[2]) == 0:
-                        return False, False
+                    # elif abs(gride_angle - obstacle[2]) == 0:
+                    #     return False, False
                     else:
                         return True, True
 

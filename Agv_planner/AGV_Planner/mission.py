@@ -14,7 +14,7 @@ from create_map import get_map_data
 from typing import List, Tuple, Dict, Callable, Set, Any
 
 class Mission:
-    def __init__(self, starts: List[Tuple[int, int]], goals: List[Tuple[int, int]], mission_num: int = 10):
+    def __init__(self, starts: List[Tuple[int, int]], goals: List[Tuple[int, int]], mission_num: int = 30):
         self.env = Env(use_benchmark=True)
         self.x_range = self.env.x_range
         self.y_range = self.env.y_range

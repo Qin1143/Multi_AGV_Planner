@@ -30,8 +30,8 @@ class Plotting:
         self.final_x = final_x
         self.final_y = final_y
         self.colors = [cmap(i) for i in np.linspace(0, 1, self.mission_num)]
-        # self.multi_plot_2D_static(self.paths)
-        self.multi_plot_2D_dynamic()
+        self.multi_plot_2D_static(self.paths)
+        # self.multi_plot_2D_dynamic()
         # self.plot_show_DP_QP(self.DP_paths_all, self.QP_paths_all)
 
     def multi_plot_2D_dynamic(self):
@@ -43,14 +43,17 @@ class Plotting:
         """
         创建一个动画，展示机器人的运动轨迹final_x和final_y
         """
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(12, 9))
         ax.set_xlim(0, self.width)
         ax.set_ylim(0, self.height)
         ax.set_aspect('equal')
         ax.set_title('Multi_AGV_Planner')
         ax.set_xlabel('X(m)')
         ax.set_ylabel('Y(m)')
+        max_time = 0
         for i in range(self.mission_num):
+            if len(self.final_x[i])/100 > max_time:
+                max_time = len(self.final_x[i])/100
             ax.plot(self.starts[i][0], self.starts[i][1], color=self.colors[i], marker='o', markersize=8)
             ax.plot(self.goals[i][0], self.goals[i][1], color=self.colors[i], marker='^', markersize=8)
             ax.annotate(str(i), (self.starts[i][0], self.starts[i][1]))
@@ -84,7 +87,7 @@ class Plotting:
 
         lines = []
         for i in range(self.mission_num):
-            l, = ax.plot([], [], color=self.colors[i], linewidth=3, alpha=0.5)
+            l, = ax.plot([], [], color=self.colors[i], linewidth=3, alpha=0.8)
             lines.append(l)
 
         def init():
@@ -95,9 +98,16 @@ class Plotting:
             for j in range(self.mission_num):
                 lines[j].set_data(self.final_x[j][:i], self.final_y[j][:i])
             return lines
-
-        ani = animation.FuncAnimation(fig, animate, init_func=init, frames=len(self.final_x[0]), interval=10, blit=True) # interval=10表示每隔10ms更新一次，也是正常速度
+        speed = 10
+        frame_rate = 100  # 每秒的帧数
+        frames = round(max_time * frame_rate)  # 总帧数
+        interval = 1000 / (speed * frame_rate)  # 每帧之间的时间间隔，单位为毫秒
+        ani = animation.FuncAnimation(fig, animate, init_func=init, frames=frames, interval=interval, blit=True) # interval=10表示每隔10ms更新一次，也是正常速度 interval=1表示十倍速
+        filename_gif = f'/home/tony/MAPF/Figures/animation_{self.mission_num}agents.gif'
+        filename_mp4 = f'/home/tony/MAPF/Figures/animation_{self.mission_num}agents.mp4'
         plt.show()
+        ani.save(filename_gif, writer='pillow')
+        # ani.save(filename_mp4, writer='pillow')
 
     def multi_plot_2D_static(self, paths):
         self.plot_grid()

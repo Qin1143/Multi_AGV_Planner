@@ -30,7 +30,7 @@ def qp_st_2_xy(path_sub, qp_paths_s, qp_paths_t, corners, mission_num):
                 if point_start[0] == point_end[0] and point_start[1] == point_end[1]:  # 如果起点和终点重合,等待段
                     x = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0]
                     y = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[1]
-                    print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape)
+                    # print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape)
                     continue
                 if point_start[0] == point_end[0]:  # 如果x坐标相等, 说明是竖直方向移动
                     if point_end[1] < point_start[1]:  # 向下移动
@@ -38,14 +38,14 @@ def qp_st_2_xy(path_sub, qp_paths_s, qp_paths_t, corners, mission_num):
                     else:  # 向上移动
                         y = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[1] + qp_paths_s[(i, j)]
                     x = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0]
-                    print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape)
+                    # print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape)
                 else:   # 如果y坐标相等, 说明是水平方向移动
                     if point_end[0] < point_start[0]:  # 向左移动
                         x = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0] - qp_paths_s[(i, j)]
                     else:  # 向右移动
                         x = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0] + qp_paths_s[(i, j)]
                     y = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[1]
-                    print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape)
+                    # print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape)
             else:
                 point_start = path_sub[(i, j)][0]
                 point_end = path_sub[(i, j)][-1]
@@ -55,7 +55,7 @@ def qp_st_2_xy(path_sub, qp_paths_s, qp_paths_t, corners, mission_num):
                     y_sub = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[1]
                     x = np.append(x, x_sub)
                     y = np.append(y, y_sub)
-                    print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape, "len_x_sub", x_sub.shape, "len_y_sub", y_sub.shape)
+                    # print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape, "len_x_sub", x_sub.shape, "len_y_sub", y_sub.shape)
                     continue
                 if point_start[0] == point_end[0]:
                     if point_end[1] < point_start[1]:
@@ -65,7 +65,7 @@ def qp_st_2_xy(path_sub, qp_paths_s, qp_paths_t, corners, mission_num):
                         y_sub = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[1] + qp_paths_s[(i, j)]
                         y = np.append(y, y_sub)
                     x = np.append(x, np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0])
-                    print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape, "len_y_sub:", y_sub.shape)
+                    # print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape, "len_y_sub:", y_sub.shape)
                 else:
                     if point_end[0] < point_start[0]:
                         x_sub = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0] - qp_paths_s[(i, j)]
@@ -74,11 +74,11 @@ def qp_st_2_xy(path_sub, qp_paths_s, qp_paths_t, corners, mission_num):
                         x_sub = np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[0] + qp_paths_s[(i, j)]
                         x = np.append(x, x_sub)
                     y = np.append(y, np.ones( (len(qp_paths_s[(i, j)]), 1) ) * point_start[1])
-                    print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape, "len_x_sub:", x_sub.shape)
+                    # print("len_x:", x.shape, "len_y:", y.shape, "len_qp_paths_s:", qp_paths_s[(i, j)].shape, "len_x_sub:", x_sub.shape)
 
         final_x[i] = x
         final_y[i] = y
-        print("Mission:", i, "final_x:", len(final_x[i]), "final_Y：", len(final_y[i]))
+        # print("Mission:", i, "final_x:", len(final_x[i]), "final_Y：", len(final_y[i]))
     return final_x, final_y
 
 
@@ -172,11 +172,11 @@ def main():
     starts = []
     goals = []
 
-    # starts = [(145, 50), (124, 13), (59, 66), (105, 81), (158, 33), (60, 50), (57, 50), (25, 78), (132, 79), (28, 25)]
-    # goals = [(84, 52), (98, 70), (106, 81), (13, 28), (54, 73), (168, 68), (113, 45), (162, 27), (67, 74), (65, 78)]
+    # starts = [(164, 29), (103, 33), (42, 77), (1, 24), (63, 9), (49, 80), (54, 26), (127, 42), (158, 12), (55, 78), (64, 73), (109, 6), (165, 20), (17, 17), (5, 40), (33, 45), (165, 37), (156, 44), (85, 81), (77, 21), (82, 21), (13, 29), (49, 26), (47, 41), (10, 34), (154, 55), (68, 10), (19, 32), (36, 40), (18, 66)]
+    # goals = [(100, 62), (49, 82), (71, 6), (164, 51), (47, 49), (92, 70), (163, 33), (74, 65), (164, 57), (146, 23), (18, 73), (28, 37), (27, 42), (168, 2), (98, 82), (168, 48), (102, 14), (54, 49), (98, 9), (145, 52), (47, 73), (84, 54), (60, 76), (123, 38), (67, 21), (65, 57), (155, 65), (91, 9), (151, 17), (141, 61)]
 
-    starts = [(5, 5), (20, 15), (10, 70), (15, 35), (15, 20), (15, 10), (10, 15), (25, 80), (15, 15), (20, 55)]  # origin
-    goals = [(160, 80), (160, 60), (155, 15), (150, 75), (160, 80), (150, 20), (155, 70), (160, 70), (165, 25), (165, 10)]
+    # starts = [(5, 5), (20, 15), (10, 70), (15, 35), (15, 20), (15, 10), (10, 15), (25, 80), (15, 15), (20, 55)]  # origin
+    # goals = [(160, 80), (160, 60), (155, 15), (150, 75), (160, 80), (150, 20), (155, 70), (160, 70), (165, 25), (165, 10)]
     env = Env(use_benchmark=True)
     mission = Mission(starts, goals)
     planner = Planner(grid_size=1, robot_radius=0.4, static_obstacles=env.obs)
@@ -242,7 +242,7 @@ def main():
 
             if path_angle[j] != path_angle[j - 1]:
                 corner.append(j)  # j为下一段轨迹的起始点的index
-                print("j:", j,"path:[j]", path[j], "path_angle[j]:", path_angle[j], "path_angle[j-1]:", path_angle[j-1])
+                print("j:", j, "path:[j]", path[j], "path_angle[j]:", path_angle[j], "path_angle[j-1]:", path_angle[j-1])
 
         corners_index[i] = corner
         paths[i] = path
