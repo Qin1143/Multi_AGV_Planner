@@ -43,7 +43,7 @@ class Plotting:
         """
         创建一个动画，展示机器人的运动轨迹final_x和final_y
         """
-        fig, ax = plt.subplots(figsize=(12, 9))
+        fig, ax = plt.subplots(figsize=(16, 12))
         ax.set_xlim(0, self.width)
         ax.set_ylim(0, self.height)
         ax.set_aspect('equal')
@@ -117,15 +117,17 @@ class Plotting:
     def plot_grid(self):
         obs_x = [x[0] for x in self.obs]
         obs_y = [x[1] for x in self.obs]
-        plt.figure(figsize=(8, 6))
+        plt.figure(figsize=(16, 12))
+        # plt.get_current_fig_manager().full_screen_toggle()
         for i in range(self.mission_num):
             plt.plot(self.starts[i][0], self.starts[i][1], color=self.colors[i], marker='o', markersize=8)
             plt.plot(self.goals[i][0], self.goals[i][1], color=self.colors[i], marker='^', markersize=8)
             plt.annotate(str(i), (self.starts[i][0], self.starts[i][1]))
-        plt.plot(obs_x, obs_y, "sk")
+        plt.plot(obs_x, obs_y, "sk", alpha=0.5)
         plt.xlabel('X(m)')
         plt.ylabel('Y(M)')
-        plt.title('Multi_AGV_Planner')
+        name = f'Multi_AGV_Planner_{self.mission_num}Agents'
+        plt.title(name)
         plt.axis("equal")
 
     def plot_static_paths(self, paths):
@@ -134,7 +136,7 @@ class Plotting:
             path_y = [point[1] for point in paths[i]]
             # corners_x = [path_x[j] for j in self.corners_index[i]]
             # corners_y = [path_y[j] for j in self.corners_index[i]]
-            plt.plot(path_x, path_y, linewidth='3', color=self.colors[i], alpha=0.5)
+            plt.plot(path_x, path_y, linewidth='3', color=self.colors[i], alpha=0.8)
             # plt.plot(corners_x, corners_y, 'o', color=self.colors[i], alpha=1)
 
             # for j in range(len(path_x) - 1):  # 每隔10个点绘制一个箭头
