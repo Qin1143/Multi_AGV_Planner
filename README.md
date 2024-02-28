@@ -19,7 +19,7 @@ ST_Astar + DP + QP
 <img src=https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/high-speed.gif>
 </div>
 
-### Multi-agent global path planning
+### Multi-AGV planner result
 <div align=center>
 <img src=https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/STAstar_gx_10agents.png>
 </div>
