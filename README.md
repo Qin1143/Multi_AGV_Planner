@@ -27,12 +27,32 @@ ST_Astar + DP + QP
 <div align="center">
 <table>
   <tr>
-    <td><img src=https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/10agents_redom.png alt="Image 1" width="400"/></td>
-    <td><img src=https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/20agents_redom.png alt="Image 2" width="400"/></td>
+    <td>
+      <figure>
+        <img src="https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/10agents_redom.png" alt="Image 1" width="200"/>
+        <figcaption>10 Agents</figcaption>
+      </figure>
+    </td>
+    <td>
+      <figure>
+        <img src="https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/20agents_redom.png" alt="Image 2" width="200"/>
+        <figcaption>20 Agents</figcaption>
+      </figure>
+    </td>
   </tr>
   <tr>
-    <td><img src=https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/30agents_redom.png alt="Image 3" width="400"/></td>
-    <td><img src=https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/40agents_redom.png alt="Image 4" width="400"/></td>
+    <td>
+      <figure>
+        <img src="https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/30agents_redom.png" alt="Image 3" width="200"/>
+        <figcaption>30 Agents</figcaption>
+      </figure>
+    </td>
+    <td>
+      <figure>
+        <img src="https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/40agents_redom.png" alt="Image 4" width="200"/>
+        <figcaption>40 Agents</figcaption>
+      </figure>
+    </td>
   </tr>
 </table>
 </div>
