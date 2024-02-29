@@ -24,6 +24,7 @@ ST_Astar + DP + QP
 <img src=https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/STAstar_gx_10agents.png>
 </div>
 
+<div align="center">
 <table>
   <tr>
     <td><img src=https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/10agents_redom.png alt="Image 1" width="200"/></td>
@@ -34,3 +35,4 @@ ST_Astar + DP + QP
     <td><img src=https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/40agents_redom.png alt="Image 4" width="200"/></td>
   </tr>
 </table>
+</div>
