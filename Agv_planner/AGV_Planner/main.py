@@ -89,12 +89,16 @@ def vertex_cons_2_st(vertex_cons) -> Tuple[List, List]:
     for index, k in enumerate(vertex_cons[:-1]):  # 遍历vertex_cons，但不包括最后一个元素
         if index == 0 and vertex_cons[index] == 1:
             dy_obs_in.append((index, index))
+            continue
         if index == len(vertex_cons) - 2 and vertex_cons[index + 1] == 1:
             dy_obs_out.append((index, index))
+            continue
         if k == 0 and vertex_cons[index + 1] == 1:
             dy_obs_in.append((index + 1, index + 1))
+            continue
         if k == 1 and vertex_cons[index + 1] == 0:
             dy_obs_out.append((index, index))
+            continue
 
     # print('dy_obs_in:', dy_obs_in, 'dy_obs_out:', dy_obs_out)
     return dy_obs_in, dy_obs_out
@@ -172,6 +176,10 @@ def main():
     starts = []
     goals = []
 
+    # small size map
+    # starts = [(8, 9), (40, 13), (17, 1)]
+    # goals = [(38, 4), (2, 2), (30, 18)]
+
     # starts = [(23, 50), (84, 33), (85, 45), (150, 58), (88, 29), (152, 22), (4, 42), (168, 4), (23, 37), (3, 75),
     #          (73, 25), (154, 43), (120, 48), (166, 67), (10, 31), (48, 80), (160, 2), (15, 36), (52, 61), (43, 21),
     #          (14, 36), (158, 1), (102, 34), (133, 82), (19, 65), (111, 42), (160, 19), (24, 31), (146, 47), (24, 35)]
@@ -179,8 +187,8 @@ def main():
     #         (121, 58), (13, 11), (55, 37), (50, 70), (36, 68), (18, 33), (95, 46), (164, 65), (163, 35), (152, 5),
     #         (58, 6), (98, 74), (36, 74), (16, 38), (156, 23), (154, 14), (61, 20), (79, 78), (68, 14), (151, 74)]
 
-    # starts = [(5, 5), (20, 15), (10, 70), (15, 35), (15, 20), (15, 10), (10, 15), (25, 80), (15, 15), (20, 55)]  # origin
-    # goals = [(160, 80), (160, 60), (155, 15), (150, 75), (160, 80), (150, 20), (155, 70), (160, 70), (165, 25), (165, 10)]  # origin
+    starts = [(5, 5), (20, 15), (10, 70), (15, 35), (15, 20), (15, 10), (10, 15), (25, 80), (15, 15), (20, 55)]  # origin
+    goals = [(160, 80), (160, 60), (155, 15), (150, 75), (160, 80), (150, 20), (155, 70), (160, 70), (165, 25), (165, 10)]  # origin
     env = Env(use_benchmark=True)
     mission = Mission(starts, goals)
     planner = Planner(grid_size=1, robot_radius=0.4, static_obstacles=env.obs)
@@ -280,10 +288,11 @@ def main():
                 low_dp_bound_sub[(i, j)] = low_dp_bound[i][corners_index[i][-1]-1:]
             else:
                 path_sub[(i, j)] = paths[i][corners_index[i][j-1]-1:corners_index[i][j]]
-                dp_vertex_constraints_sub[(i, j)] = np.insert(dp_vertex_constraints[i][corners_index[i][-1]:], 0, 0)
+                dp_vertex_constraints_sub[(i, j)] = np.insert(dp_vertex_constraints[i][corners_index[i][j-1]-1:corners_index[i][j]], 0, 0)
                 up_dp_bound_sub[(i, j)] = up_dp_bound[i][corners_index[i][j-1]-1:corners_index[i][j]]
                 low_dp_bound_sub[(i, j)] = low_dp_bound[i][corners_index[i][j-1]-1:corners_index[i][j]]
-        # print("Path:", path)
+        for index, value in enumerate(path):
+            print("Index:", index, "Path:", value)
         for j in range(len(corners_index[i]) + 1):
             # print("corners_index:", corners_index[i])
             # print("(i, j):", i, j, "path_sub:", path_sub[(i, j)])
@@ -363,6 +372,8 @@ def main():
                     qp_paths_s[(i, j)] = np.zeros((int(dp_paths_t[(i, j)][-1]) * 100, 1))
                     qp_paths_t[(i, j)] = np.linspace(0, dp_paths_t[(i, j)][-1], int(dp_paths_t[(i, j)][-1]) * 100).reshape(-1, 1)
                 else:
+                    print("dp_vertex_constraints_sub:", dp_vertex_constraints_sub[(i, j)])
+
                     dy_obs_in, dy_obs_out = vertex_cons_2_st(dp_vertex_constraints_sub[(i, j)])
 
                     start_time_dp_planner = time.time()

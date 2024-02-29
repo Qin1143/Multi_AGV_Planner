@@ -102,7 +102,7 @@ class Planner:
         def safe_dynamic(grid_pos: np.ndarray, gride_angle: float, time: int) -> Tuple[bool, bool]:  # 1,是否与动态障碍物绝对安全 2,是否通过轨迹规划解决
             # nonlocal dynamic_obstacles # 非局部变量dynamic_obstacles
             for obstacle in self.dynamic_obstacles.setdefault(time, np.array([])):
-                if self.l2(grid_pos, obstacle[0:2]) <= 4 * self.robot_radius:
+                if self.l2(grid_pos, obstacle[0:2]) <= 2 * self.robot_radius:
                     if abs(gride_angle - obstacle[2]) == math.pi:
                         return False, False
                     elif gride_angle == math.inf:

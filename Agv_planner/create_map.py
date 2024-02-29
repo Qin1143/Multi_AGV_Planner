@@ -5,7 +5,9 @@ from typing import List, Tuple, Dict, Callable, Set
 def get_map_data():
     # Open the file in read mode
     # ‘with’ makes sure that the file is closed automatically once the program exits the block
-    with open('/home/tony/MAPF/MAP/warehouse-10-20-10-2-2.map', 'r') as file:
+    filename_1 = '/home/tony/MAPF/MAP/warehouse-10-20-10-2-2.map'
+    filename_2 = '/home/tony/MAPF/MAP/warehouse-test'
+    with open(filename_2, 'r') as file:
         map_data = file.read()
 
     # Split the map into lines

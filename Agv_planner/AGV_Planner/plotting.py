@@ -32,7 +32,7 @@ class Plotting:
         self.colors = [cmap(i) for i in np.linspace(0, 1, self.mission_num)]
         self.multi_plot_2D_static(self.paths)
         # self.multi_plot_2D_dynamic()
-        # self.plot_show_DP_QP(self.DP_paths_all, self.QP_paths_all)
+        self.plot_show_DP_QP(self.DP_paths_all, self.QP_paths_all)
 
     def multi_plot_2D_dynamic(self):
         # self.plot_grid()
@@ -152,19 +152,30 @@ class Plotting:
         # colors = [cmap(i) for i in np.linspace(0, 1, self.mission_num)]
         # print(self.mission_num)
         for i in range(self.mission_num):
-            plt.figure()
+            plt.figure(figsize=(8, 6))
             Tims = np.arange(len(self.paths[i]))
-            plt.plot(Tims, self.S[i])#, colors[i])
-            plt.plot(DP_paths_all[i][:, 1], DP_paths_all[i][:, 0])#, colors[i])
-            plt.plot(QP_paths_all[i][:, 1], QP_paths_all[i][:, 0])#, colors[i])
-            plt.plot(Tims, self.up_dp_bound[i] + self.S[i], 'r')
+            plt.plot(Tims, self.S[i], label='STAster')#, colors[i])
+            plt.plot(DP_paths_all[i][:, 1], DP_paths_all[i][:, 0], label='Dynamic Programming')#, colors[i])
+            plt.plot(QP_paths_all[i][:, 1], QP_paths_all[i][:, 0], label='Quadratic Programming')#, colors[i])
+            plt.plot(Tims, self.up_dp_bound[i] + self.S[i], 'r', label='Bound')
             plt.plot(Tims, self.low_dp_bound[i] + self.S[i], 'r')
+            obs_label = True
             for index, k in enumerate(self.dp_vertex_constraints[i]):
                 if k == 1:
-                    plt.plot(Tims[index], self.S[i][index], 'ro', markersize=5)
+                    if obs_label is True:
+                        rect1 = plt.Rectangle((Tims[index] - 0.5, self.S[i][index] - 0.5), 1, 1,
+                                              color='red', alpha=0.2)
+                        plt.gca().add_patch(rect1)
+                        plt.plot(Tims[index], self.S[i][index], 'ro', markersize=5, label='Obstacle')
+                        obs_label = False
+                    else:
+                        rect1 = plt.Rectangle((Tims[index] - 0.5, self.S[i][index] - 0.5), 1, 1,
+                                              color='red', alpha=0.2)
+                        plt.gca().add_patch(rect1)
+                        plt.plot(Tims[index], self.S[i][index], 'ro', markersize=5)
 
             # 图例
-            plt.legend(['STAstar', 'DP', 'QP'])
+            plt.legend()
             plt.xlabel('T(s)')
             plt.ylabel('S(m)')
             plt.title('ST_Figure_mission_' + str(i))

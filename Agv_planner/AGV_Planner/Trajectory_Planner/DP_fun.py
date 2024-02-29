@@ -107,11 +107,11 @@ def dp_planner(path, dy_obs_in, dy_obs_out, v_max, v_min, a_max, a_min, dp_up_bo
     min_row = int
     min_col = int
     # 遍历右边界
-    for i in range(len(interpolated_s)):
-        if dp_st_cost[i, -1] < min_cost:
-            min_cost = dp_st_cost[i, -1]
-            min_row = i
-            min_col = len(interpolated_time) - 2
+    # for i in range(len(interpolated_s)):
+    #     if dp_st_cost[i, -1] < min_cost:
+    #         min_cost = dp_st_cost[i, -1]
+    #         min_row = i
+    #         min_col = len(interpolated_time) - 2
     # 遍历上边界
     for j in range(len(interpolated_time) - 1):
         if dp_st_cost[-1, j] <= min_cost:
