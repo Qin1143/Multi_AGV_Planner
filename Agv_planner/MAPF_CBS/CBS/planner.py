@@ -94,13 +94,13 @@ class Planner:
                 if len(result) == 1:  # 如果结果长度为1
                     if debug:  # 如果调试模式
                         print('CBS_MAPF: Paths found after about {0} iterations'.format(4 * iter_))  # 打印路径找到的消息
+                        end_time = time.time()
+                        self.calculate_time = end_time - start_time
                     return result[0]  # 返回结果中的第一个节点
                 if result[0]:  # 如果结果的第一个节点存在
                     heappush(open, result[0])  # 将结果的第一个节点推入开放列表
                 if result[1]:  # 如果结果的第二个节点存在
                     heappush(open, result[1])  # 将结果的第二个节点推入开放列表
-        end_time = time.time()
-        self.calculate_time = end_time - start_time
         if debug:
             print('CBS-MAPF: Open set is empty, no paths found.')
         return np.array([])
@@ -124,6 +124,7 @@ class Planner:
         else:  # 如果不是，则说明该冲突是边冲突
             agent_i_constraint = self.edge_constraints(best, agent_i, agent_j, time_of_conflict)
             agent_j_constraint = self.edge_constraints(best, agent_j, agent_i, time_of_conflict)
+
         # Calculate new paths
         agent_i_path = self.calculate_path(agent_i,
                                            agent_i_constraint,
@@ -221,15 +222,15 @@ class Planner:
         print("T:", times, "obs1:", obstacle1, "obs2:", obstacle2)
         while True:
             t = times[-1] + 1
-            if self.dist(agent_1_path[t], agent_1_path[t-2]) <= 2:  # agent1转向
+            if self.dist(agent_1_path[t], agent_1_path[t-3]) <= 2:  # agent1转向
                 return node.constraints.fork_edge(agent_1, obstacle1, times)
-            elif self.dist(agent_2_path[t], agent_2_path[t-2]) <= 2:  # agent2转向
+            elif self.dist(agent_2_path[t], agent_2_path[t-3]) <= 2:  # agent2转向
                 return node.constraints.fork_edge(agent_2, obstacle2, times)
             else:
                 obstacle1.append(agent_1_path[t])
                 obstacle2.append(agent_2_path[t])
                 times.append(t)
-                break
+                # break
         # contrained_path = node.solution[constrained_agent]  # 受限路径
         # unchanged_path = node.solution[unchanged_agent]  # 不受限路径
         # obstacle1 = unchanged_path[time_of_conflict[0]].tolist()

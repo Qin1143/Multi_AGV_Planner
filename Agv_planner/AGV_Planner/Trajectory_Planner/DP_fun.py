@@ -56,7 +56,8 @@ def dp_planner(path, dy_obs_in, dy_obs_out, v_max, v_min, a_max, a_min, dp_up_bo
     # 计算从dp起点到第一列的cost
     for i in range(len(interpolated_s)):
 
-        if interpolated_s[i] > interpolated_s[1] + dp_up_bound[1] or interpolated_s[i] <  interpolated_s[1] + dp_low_bound[1]:
+        # if interpolated_s[i] > interpolated_s[1] + dp_up_bound[1] or interpolated_s[i] <  interpolated_s[1] + dp_low_bound[1]:
+        if interpolated_s[i] > interpolated_s[1] + 5 or interpolated_s[i] < interpolated_s[1] - 5:
             continue
 
         dp_st_cost[i, 0], cur_s_dot, cur_s_dot2 = CalcDpCost(0,0, i,0, obs_st_s_in_set, obs_st_s_out_set, obs_st_t_in_set, obs_st_t_out_set,

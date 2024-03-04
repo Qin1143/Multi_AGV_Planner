@@ -4,7 +4,9 @@ from CBS.planner import Planner
 from CBS.assigner import *
 from Agv_planner.create_map import get_map_data
 import random
-import Agv_planner.MAPF_CBS.plotting as plotting
+import time
+import Agv_planner.MAPF_CBS.CBS_plotting as plotting
+from Agv_planner.AGV_Planner.mission import Mission
 
 
 def main():
@@ -24,39 +26,45 @@ def main():
     num_iterations = 10
     Starts = []
     Goals = []
+    mission = Mission(Starts, Goals)
 
-    for i in range(num_iterations):
-        start_x = random.randint(1, 24)
-        start_y = random.randint(1, height-2)
-        goal_x = random.randint(width-1-24, width-2)
-        goal_y = random.randint(1, height-2)
-        start = (start_x, start_y)
-        goal = (goal_x, goal_y)
-        Starts.append(start)
-        Goals.append(goal)
-
-    for start_point in Starts:
-        if start_point in obs:
-            print("start point in obstacle")
-            exit(0)
-
-    for goal_point in Goals:
-        if goal_point in obs:
-            print("goal point in obstacle")
-            exit(0)
-
+    # 随机生成任务
+    # for i in range(num_iterations):
+    #     start_x = random.randint(1, 24)
+    #     start_y = random.randint(1, height-2)
+    #     goal_x = random.randint(width-1-24, width-2)
+    #     goal_y = random.randint(1, height-2)
+    #     start = (start_x, start_y)
+    #     goal = (goal_x, goal_y)
+    #     Starts.append(start)
+    #     Goals.append(goal)
+    #
+    # for start_point in Starts:
+    #     if start_point in obs:
+    #         print("start point in obstacle")
+    #         exit(0)
+    #
+    # for goal_point in Goals:
+    #     if goal_point in obs:
+    #         print("goal point in obstacle")
+    #         exit(0)
+    start_time = time.time()
     path = planner.plan(
-        starts=Starts,
-        goals=Goals,
+        starts=mission.starts,
+        goals=mission.goals,
         assign=no_assign,
         max_iter=500,
         low_level_max_iter=2000,
+        max_process=50,
         debug=True
     )
+    end_time = time.time()
+    print('Calculate time cost: ', end_time - start_time)
+    # print('Calculate time cost: ', planner.calculate_time)
 
-    plot = plotting.Plotting(Starts, Goals)
+    # print('Path:', path)
+    plot = plotting.Plotting(mission.starts, mission.goals)
     plot.multi_plot_2D(path, 'CBS')
-    print('Calculate time cost: ', planner.calculate_time)
 
 
     # print(path)

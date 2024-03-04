@@ -86,19 +86,27 @@ def qp_st_2_xy(path_sub, qp_paths_s, qp_paths_t, corners, mission_num):
 def vertex_cons_2_st(vertex_cons) -> Tuple[List, List]:
     dy_obs_in = []
     dy_obs_out = []
-    for index, k in enumerate(vertex_cons[:-1]):  # 遍历vertex_cons，但不包括最后一个元素
+    last = None
+    for index in range(len(vertex_cons)):  # 遍历vertex_cons
         if index == 0 and vertex_cons[index] == 1:
             dy_obs_in.append((index, index))
-            continue
-        if index == len(vertex_cons) - 2 and vertex_cons[index + 1] == 1:
+        if last == 0 and vertex_cons[index] == 1:
+            dy_obs_in.append((index, index))
+        if last == 1 and vertex_cons[index] == 0:
+            dy_obs_out.append((index-1, index-1))
+        if index == len(vertex_cons) - 1 and vertex_cons[index] == 1:
             dy_obs_out.append((index, index))
-            continue
-        if k == 0 and vertex_cons[index + 1] == 1:
-            dy_obs_in.append((index + 1, index + 1))
-            continue
-        if k == 1 and vertex_cons[index + 1] == 0:
-            dy_obs_out.append((index, index))
-            continue
+        last = vertex_cons[index]
+
+    # for index, k in enumerate(vertex_cons[:-1]):  # 遍历vertex_cons，但不包括最后一个元素
+    #     if index == 0 and vertex_cons[index] == 1:
+    #         dy_obs_in.append((index, index))
+    #     if index == len(vertex_cons) - 2 and vertex_cons[index + 1] == 1:
+    #         dy_obs_out.append((index, index))
+    #     if k == 0 and vertex_cons[index + 1] == 1:
+    #         dy_obs_in.append((index + 1, index + 1))
+    #     if k == 1 and vertex_cons[index + 1] == 0:
+    #         dy_obs_out.append((index, index))
 
     # print('dy_obs_in:', dy_obs_in, 'dy_obs_out:', dy_obs_out)
     return dy_obs_in, dy_obs_out
@@ -165,6 +173,16 @@ def dynamic_obstacles_dp(dp_paths_all, path, angle, s, dynamic_obstacles):
 
     return dynamic_obstacles
 
+def semi_dynamic_obstacles_dp(dp_paths_all, path, semi_dynamic_obstacles):
+    t = dp_paths_all[-1][1]
+    if t not in semi_dynamic_obstacles:
+        semi_dynamic_obstacles[t] = set()
+        semi_dynamic_obstacles[t].add((path[-1][0], path[-1][1]))
+    else:
+        semi_dynamic_obstacles[t].add((path[-1][0], path[-1][1]))
+
+    return semi_dynamic_obstacles
+
 def check_wait_segment(path):
     if np.array_equal(path[0], path[-1]):
         return True
@@ -177,8 +195,8 @@ def main():
     goals = []
 
     # small size map
-    starts = [(8, 9), (40, 13), (17, 1)]
-    goals = [(38, 4), (2, 2), (30, 18)]
+    starts = [(32, 5), (41, 14), (37, 3), (6, 6), (42, 17), (11, 2), (40, 14), (41, 1), (6, 18), (38, 11), (14, 18), (4, 1), (10, 1), (42, 16), (35, 11), (2, 15), (36, 10), (29, 14), (41, 7), (2, 17)]
+    goals = [(6, 5), (16, 17), (10, 4), (31, 17), (7, 2), (28, 17), (9, 6), (1, 6), (41, 12), (9, 4), (36, 15), (34, 12), (34, 17), (5, 9), (2, 3), (24, 18), (7, 14), (6, 17), (18, 13), (34, 16)]
 
     # starts = [(23, 50), (84, 33), (85, 45), (150, 58), (88, 29), (152, 22), (4, 42), (168, 4), (23, 37), (3, 75),
     #          (73, 25), (154, 43), (120, 48), (166, 67), (10, 31), (48, 80), (160, 2), (15, 36), (52, 61), (43, 21),
@@ -196,6 +214,7 @@ def main():
     paths_angle = dict()
     corners_index = dict()
     dynamic_obstacles = dict()
+    semi_dynamic_obstacles = dict()
     dp_vertex_constraints = dict()
     up_dp_bound = dict()
     low_dp_bound = dict()
@@ -230,6 +249,7 @@ def main():
             start=mission.starts[i],
             goal=mission.goals[i],
             dynamic_obstacles=dynamic_obstacles,
+            semi_dynamic_obstacles=semi_dynamic_obstacles,
             max_iter=1000,
             debug=False
         )
@@ -288,15 +308,15 @@ def main():
                 low_dp_bound_sub[(i, j)] = low_dp_bound[i][corners_index[i][-1]-1:]
             else:
                 path_sub[(i, j)] = paths[i][corners_index[i][j-1]-1:corners_index[i][j]]
-                dp_vertex_constraints_sub[(i, j)] = np.insert(dp_vertex_constraints[i][corners_index[i][j-1]-1:corners_index[i][j]], 0, 0)
+                dp_vertex_constraints_sub[(i, j)] = np.insert(dp_vertex_constraints[i][corners_index[i][j-1]:corners_index[i][j]], 0, 0)
                 up_dp_bound_sub[(i, j)] = up_dp_bound[i][corners_index[i][j-1]-1:corners_index[i][j]]
                 low_dp_bound_sub[(i, j)] = low_dp_bound[i][corners_index[i][j-1]-1:corners_index[i][j]]
         for index, value in enumerate(path):
             print("Index:", index, "Path:", value)
         for j in range(len(corners_index[i]) + 1):
             # print("corners_index:", corners_index[i])
-            # print("(i, j):", i, j, "path_sub:", path_sub[(i, j)])
-
+            print("(i, j):", i, j, "path_sub:", path_sub[(i, j)])
+            print("dp_vertex_constraints_sub:", dp_vertex_constraints_sub[(i, j)])
             if j == 0:  # 第一段
                 if check_wait_segment(path_sub[(i, j)]):
                     print("wait segment")
@@ -372,7 +392,7 @@ def main():
                     qp_paths_s[(i, j)] = np.zeros((int(dp_paths_t[(i, j)][-1]) * 100, 1))
                     qp_paths_t[(i, j)] = np.linspace(0, dp_paths_t[(i, j)][-1], int(dp_paths_t[(i, j)][-1]) * 100).reshape(-1, 1)
                 else:
-                    print("dp_vertex_constraints_sub:", dp_vertex_constraints_sub[(i, j)])
+                    # print("dp_vertex_constraints_sub:", dp_vertex_constraints_sub[(i, j)])
 
                     dy_obs_in, dy_obs_out = vertex_cons_2_st(dp_vertex_constraints_sub[(i, j)])
 
@@ -409,13 +429,13 @@ def main():
         all_traj_time += qp_paths_all[i][-1][1]
 
         dynamic_obstacles = dynamic_obstacles_dp(dp_paths_all[i], path, path_angle, s[i], dynamic_obstacles)
+        semi_dynamic_obstacles = semi_dynamic_obstacles_dp(dp_paths_all[i], path, semi_dynamic_obstacles)
 
     end_time_all = time.time()
     print("Time:", end_time_all - start_time_all, "Time of Global Planner:", time_of_global_planner,
           "Time of DP Planner:", time_of_dp_planner, "Time of QP Planner:", time_of_qp_planner)
     print("Mission Num:", mission.mission_num,"All Trajectory Length:", all_traj_length, "All Trajectory Time:", all_traj_time)
 
-    # print("dp_paths_all[4]:", dp_paths_all[4])
     # print("dp_vertex_constraints[4]:", dp_vertex_constraints[4])
     final_x, final_y = qp_st_2_xy(path_sub, qp_paths_s, qp_paths_t, corners_index, mission.mission_num)
     # print("final_y[7]:", final_x[7])

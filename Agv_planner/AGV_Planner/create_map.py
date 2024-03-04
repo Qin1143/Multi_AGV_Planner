@@ -46,8 +46,16 @@ def main():
     ax = fig.add_subplot(111)
     ax.set_xlim(0, width)
     ax.set_ylim(0, height)
-    ax.set_xticks(range(width))
-    ax.set_yticks(range(height))
+    # ax.set_xticks(range(width))
+    # ax.set_yticks(range(height))
+    total_cells = height * width
+    obstacle_cells = len(obstacle_coordinates)
+    obstacle_ratio = obstacle_cells / total_cells
+    print('height:', height)
+    print('width:', width)
+    # 计算出障碍物占地的比例
+    print(f"Obstacle ratio: {obstacle_ratio}")
+
 
     ax.grid(True)
     for coordinate in obstacle_coordinates:

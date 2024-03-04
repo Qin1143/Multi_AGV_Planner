@@ -5,6 +5,8 @@ from scipy import sparse
 import matplotlib.pyplot as plt
 
 def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_state, dy_obs_in = [], dy_obs_out = []):
+    print("dp_points_t:",dp_points_t)
+    print("dp_points_s:",dp_points_s)
     # dy_obs_in为st坐标 其他的st图内的坐标为ts
     # 目前QP可以处理多障碍物，但是只能处理顺次出现的障碍物，不能处理st中有时间交叉的障碍物
     # 权重参数
@@ -23,12 +25,26 @@ def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_sta
     N_DP = len(dp_points_t) - 1
     N_QP = int(deltT_DP / deltT_QP)
 
+    dy_obs_in = []
+    dy_obs_out = []
+
     no_collision = False
     if len(dy_obs_in) == 0:
         no_collision = True
     else:
         for i in range(len(dy_obs_in)):
-            for j in range(len(dp_points_t)-1):
+            for j in range(len(dp_points_t)):
+                if j == dy_obs_in[i][1]:
+                    start_collision_index[i] = j
+                    if dp_points_s[j] > dy_obs_in[i][0]:
+                        speedup[i] = True
+                    else:
+                        speedup[i] = False
+                if j == dy_obs_out[i][1]:
+                    end_collision_index[i] = j
+    print("start_collision_index", start_collision_index)
+    print("end_collision_index", end_collision_index)
+
 
                 # if dy_obs_in[i][1] == dy_obs_out[i][1] and dp_points_t[j] == dy_obs_in[i][1]:
                 #     start_collision_index[i] = j
@@ -39,21 +55,21 @@ def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_sta
                 #         speedup[i] = False
                 #     continue
 
-                if dp_points_t[j] <= dy_obs_in[i][1] < dp_points_t[j + 1] and i not in start_collision_index.keys():  # 第i个障碍物段的起始时间
-                    start_collision_index[i] = j
-                    if dp_points_s[j] > dy_obs_in[i][0]:
-                        speedup[i] = True
-                    else:
-                        speedup[i] = False
-
-                if dp_points_t[j-1] < dy_obs_out[i][1] <= dp_points_t[j] and i not in end_collision_index.keys():  # 第i个障碍物段的终止时间
-                    end_collision_index[i] = j
-
-                if j == len(dp_points_t) - 1 and i not in end_collision_index.keys():  # 如果障碍物段的终止时间在最后一个DP段的时间之后
-                    end_collision_index[i] = j
-
-                if i in start_collision_index.keys() and i in end_collision_index.keys():
-                    break
+                # if dp_points_t[j] <= dy_obs_in[i][1] < dp_points_t[j + 1] and i not in start_collision_index.keys():  # 第i个障碍物段的起始时间
+                #     start_collision_index[i] = j
+                #     if dp_points_s[j] > dy_obs_in[i][0]:
+                #         speedup[i] = True
+                #     else:
+                #         speedup[i] = False
+                #
+                # if dp_points_t[j-1] < dy_obs_out[i][1] <= dp_points_t[j] and i not in end_collision_index.keys():  # 第i个障碍物段的终止时间
+                #     end_collision_index[i] = j
+                #
+                # if j == len(dp_points_t) - 1 and i not in end_collision_index.keys():  # 如果障碍物段的终止时间在最后一个DP段的时间之后
+                #     end_collision_index[i] = j
+                #
+                # if i in start_collision_index.keys() and i in end_collision_index.keys():
+                #     break
 
 
 

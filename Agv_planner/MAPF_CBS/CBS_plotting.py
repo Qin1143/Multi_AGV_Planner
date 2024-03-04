@@ -28,9 +28,11 @@ class Plotting:
         obs_y = [x[1] for x in self.obs]
         plt.figure(figsize=(8, 6))
         for i in range(len(self.xI)):
-            plt.plot(self.xI[i][0], self.xI[i][1], color=self.colors[i], marker='o', markersize=5)
-            plt.plot(self.xG[i][0], self.xG[i][1], color=self.colors[i], marker='^', markersize=5)
-        plt.plot(obs_x, obs_y, "sk")
+            plt.plot(self.xI[i][0], self.xI[i][1], color=self.colors[i], marker='o', markersize=8)
+            plt.plot(self.xG[i][0], self.xG[i][1], color=self.colors[i], marker='^', markersize=8)
+        plt.plot(obs_x, obs_y, "sk", alpha=0.5)
+        plt.xlabel('X(m)')
+        plt.ylabel('Y(M)')
         plt.title(name)
         plt.axis("equal")
 

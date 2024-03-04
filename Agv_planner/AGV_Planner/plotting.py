@@ -73,7 +73,7 @@ class Plotting:
 
         dots = []
         for i in range(self.mission_num):
-            dot, = ax.plot([], [], color=self.colors[i], marker='o', markersize=8, alpha=0.5)
+            dot, = ax.plot([], [], color=self.colors[i], marker='o', markersize=6, alpha=0.5)
             dots.append(dot)
 
         def init():

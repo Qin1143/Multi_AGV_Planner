@@ -101,13 +101,35 @@ class Planner:
         # Assume dynamic obstacles are agents with same radius, distance needs to be 2*radius 用于判断给定的位置和时间是否安全
         def safe_dynamic(grid_pos: np.ndarray, gride_angle: float, time: int) -> Tuple[bool, bool]:  # 1,是否与动态障碍物绝对安全 2,是否通过轨迹规划解决
             # nonlocal dynamic_obstacles # 非局部变量dynamic_obstacles
+            # print("gride_angle: ", gride_angle)
             for obstacle in self.dynamic_obstacles.setdefault(time, np.array([])):
-                if self.l2(grid_pos, obstacle[0:2]) <= 2 * self.robot_radius:
-                    if abs(gride_angle - obstacle[2]) == math.pi:
+                if gride_angle == 0:
+                    next_pose = [grid_pos[0] + 1, grid_pos[1]]
+                elif gride_angle == math.pi/2:
+                    next_pose = [grid_pos[0], grid_pos[1] + 1]
+                elif gride_angle == math.pi:
+                    next_pose = [grid_pos[0] - 1, grid_pos[1]]
+                elif gride_angle == -math.pi/2:
+                    next_pose = [grid_pos[0], grid_pos[1] - 1]
+
+                if gride_angle == math.inf:
+                    pose1 = [grid_pos[0] + 1, grid_pos[1]]
+                    pose2 = [grid_pos[0], grid_pos[1] + 1]
+                    pose3 = [grid_pos[0] - 1, grid_pos[1]]
+                    pose4 = [grid_pos[0], grid_pos[1] - 1]
+                    if self.l2(pose1, obstacle[0:2]) <= 2*self.robot_radius or self.l2(pose2, obstacle[0:2]) <= 2*self.robot_radius\
+                            or self.l2(pose3, obstacle[0:2]) <= 2*self.robot_radius or self.l2(pose4, obstacle[0:2]) <= 2*self.robot_radius:
                         return False, False
-                    elif gride_angle == math.inf:
+                else:
+                    if self.l2(next_pose, obstacle[0:2]) <= 2*self.robot_radius :#and abs(gride_angle - obstacle[2]) == math.pi:  # 下个状态被占用
                         return False, False
-                    # elif abs(gride_angle - obstacle[2]) == 0:
+
+                if self.l2(grid_pos, obstacle[0:2]) <= 2*self.robot_radius:  # 重叠，顶点冲突
+                    if abs(gride_angle - obstacle[2]) == math.pi:  # 对向顶点冲突
+                        return False, False
+                    elif gride_angle == math.inf or obstacle[2] == math.inf:  # 与等待状态冲突
+                        return False, False
+                    # elif abs(gride_angle - obstacle[2]) == 0:  # 相向顶点冲突
                     #     return False, False
                     else:
                         return True, True
@@ -141,6 +163,15 @@ class Planner:
                     return False
             return True
 
+        def can_stop(current_pos: np.ndarray, time: int) -> bool:
+            # 遍历大于时间time的所有动态障碍物，若有一个动态障碍物在当前位置，则返回False
+            for t in self.dynamic_obstacles.keys():
+                if t > time:
+                    for obstacle in self.dynamic_obstacles[t]:
+                        if np.array_equal(current_pos, obstacle[0:2]):
+                            return False
+            return True
+
 
         start = self.grid.snap_to_grid(np.array(start))
         goal = self.grid.snap_to_grid(np.array(goal))
@@ -159,7 +190,7 @@ class Planner:
         while open_set and iter_ < max_iter:
             iter_ += 1
             current_state = open_set[0]  # Smallest element in min-heap (heap=堆)
-            if current_state.pos_equal_to(goal): # 判断当前位置是否与给定终点位置相等
+            if current_state.pos_equal_to(goal) and can_stop(current_state.pos, current_state.time): # 判断当前位置是否与给定终点位置相等
                 if debug:
                     print('STA*: Path found after {0} iterations'.format(iter_))
                 return self.reconstruct_path(came_from, current_state, start=s)
@@ -244,7 +275,7 @@ class Planner:
         plt.show()
 
 
-    def check_the_bound(self, current: State, max_itr = 11) -> Tuple[int, int]:
+    def check_the_bound(self, current: State, max_itr = 11) -> Tuple[int, int]:  # 这里的检测有问题
         up_bound = max_itr - 1
         low_bound = - max_itr + 1
         for i in range(1, max_itr):

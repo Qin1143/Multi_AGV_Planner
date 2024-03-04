@@ -10,11 +10,11 @@ import math
 '''
 import random
 import openpyxl
-from create_map import get_map_data
+from Agv_planner.AGV_Planner.create_map import get_map_data
 from typing import List, Tuple, Dict, Callable, Set, Any
 
 class Mission:
-    def __init__(self, starts: List[Tuple[int, int]], goals: List[Tuple[int, int]], mission_num: int = 3):
+    def __init__(self, starts: List[Tuple[int, int]], goals: List[Tuple[int, int]], mission_num: int = 20):
         self.env = Env(use_benchmark=True)
         self.x_range = self.env.x_range
         self.y_range = self.env.y_range
@@ -56,8 +56,9 @@ class Mission:
             goal_y = random.randint(1, self.y_range-2)
             start = (start_x, start_y)
             goal = (goal_x, goal_y)
-            if start in self.env.obs or goal in self.env.obs or start == goal\
-                    or self.calculate_distance(start, goal) < 40 or start in starts or goal in goals:
+            if (start in self.env.obs or goal in self.env.obs or start == goal\
+                    or self.calculate_distance(start, goal) < 20 or start in starts\
+                    or goal in goals or start in goals or goal in starts):
                 continue
             starts.append(start)
             goals.append(goal)
