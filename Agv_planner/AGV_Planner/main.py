@@ -13,6 +13,7 @@ from Trajectory_Planner.DP_fun import dp_planner
 from Trajectory_Planner.OSQP import qp_planner_osqp as qp_planner
 from tqdm import tqdm
 import time
+import pandas as pd
 
 
 def qp_st_2_xy(path_sub, qp_paths_s, qp_paths_t, corners, mission_num):
@@ -80,6 +81,61 @@ def qp_st_2_xy(path_sub, qp_paths_s, qp_paths_t, corners, mission_num):
         final_y[i] = y
         # print("Mission:", i, "final_x:", len(final_x[i]), "final_Y：", len(final_y[i]))
     return final_x, final_y
+
+def s_2_v(s, x, y, mission_num):
+    """
+    将s数据转化为v数据，v = ds/dt，并且储存在对应的excel文件中
+    """
+    dt = 0.01
+    df_total = pd.DataFrame()
+
+    for i in range(mission_num):
+        v = np.zeros(len(s[i]))
+        w = np.zeros(len(s[i]))
+        start_turn_index = []
+        end_turn_index = []
+        for j in range(0, len(s[i])-1):
+            if x[i][j] == x[i][j+1] and y[i][j] == y[i][j+1]:
+                # v[j] = 0
+                w[j] = math.inf
+            elif x[i][j] == x[i][j+1]:
+                v[j] = abs(y[i][j+1] - y[i][j]) / dt
+                # w[j] = 0
+            elif y[i][j] == y[i][j+1]:
+                v[j] = abs(x[i][j+1] - x[i][j]) / dt
+                # w[j] = 0
+        flag = False
+        for k in range(1, len(s[i])-1):
+            if w[k] == math.inf and w[k-1] != math.inf:
+                start_turn_index.append(k)
+                start_vector = [x[i][k] - x[i][k-10], y[i][k] - y[i][k-10]]
+            elif w[k] == math.inf and w[k+1] != math.inf:
+                end_turn_index.append(k)
+                end_vector = [x[i][k+10] - x[i][k], y[i][k+10] - y[i][k]]
+                flag = True
+
+            if len(start_turn_index) == len(end_turn_index) and len(start_turn_index) != 0 and len(end_turn_index) != 0 and flag:
+                start_vector = np.array(start_vector)
+                end_vector = np.array(end_vector)
+                cos_theta = np.dot(start_vector, end_vector) / (np.linalg.norm(start_vector) * np.linalg.norm(end_vector))
+                w[start_turn_index[-1]:end_turn_index[-1]+1] = math.acos(cos_theta) / (dt * (end_turn_index[-1] - start_turn_index[-1]))
+                flag = False
+
+        # 创建一个字典，其中键是列名，值是对应的numpy数组
+        data = {"v_mission_" + str(i): v, "w_mission_" + str(i): w}
+        # 创建一个DataFrame
+        df = pd.DataFrame(data)
+        # 如果df_total为空，则直接将df赋值给df_total
+        if df_total.empty:
+            df_total = df
+        else:
+            # 否则，将df的列添加到df_total中
+            df_total = pd.concat([df_total, df], axis=1)
+
+        # 将DataFrame写入excel文件
+    df_total.to_excel("output_total.xlsx", index=False)
+
+
 
 
 
@@ -194,9 +250,13 @@ def main():
     starts = []
     goals = []
 
+    #  gazebo map
+    starts = [(17, 6), (3, 7), (8, 2)]
+    goals = [(2, 16), (17, 12), (13, 17)]
+
     # small size map
-    starts = [(32, 5), (41, 14), (37, 3), (6, 6), (42, 17), (11, 2), (40, 14), (41, 1), (6, 18), (38, 11), (14, 18), (4, 1), (10, 1), (42, 16), (35, 11), (2, 15), (36, 10), (29, 14), (41, 7), (2, 17)]
-    goals = [(6, 5), (16, 17), (10, 4), (31, 17), (7, 2), (28, 17), (9, 6), (1, 6), (41, 12), (9, 4), (36, 15), (34, 12), (34, 17), (5, 9), (2, 3), (24, 18), (7, 14), (6, 17), (18, 13), (34, 16)]
+    # starts = [(32, 5), (41, 14), (37, 3), (6, 6), (42, 17), (11, 2), (40, 14), (41, 1), (6, 18), (38, 11), (14, 18), (4, 1), (10, 1), (42, 16), (35, 11), (2, 15), (36, 10), (29, 14), (41, 7), (2, 17)]
+    # goals = [(6, 5), (16, 17), (10, 4), (31, 17), (7, 2), (28, 17), (9, 6), (1, 6), (41, 12), (9, 4), (36, 15), (34, 12), (34, 17), (5, 9), (2, 3), (24, 18), (7, 14), (6, 17), (18, 13), (34, 16)]
 
     # starts = [(23, 50), (84, 33), (85, 45), (150, 58), (88, 29), (152, 22), (4, 42), (168, 4), (23, 37), (3, 75),
     #          (73, 25), (154, 43), (120, 48), (166, 67), (10, 31), (48, 80), (160, 2), (15, 36), (52, 61), (43, 21),
@@ -438,6 +498,7 @@ def main():
 
     # print("dp_vertex_constraints[4]:", dp_vertex_constraints[4])
     final_x, final_y = qp_st_2_xy(path_sub, qp_paths_s, qp_paths_t, corners_index, mission.mission_num)
+    s_2_v(qp_paths_all, final_x, final_y, mission.mission_num)
     # print("final_y[7]:", final_x[7])
     Plotting(mission.starts, mission.goals, mission.mission_num, env.y_range, env.x_range, env.obs, paths, paths_angle,
              corners_index, dp_paths_all, qp_paths_all, s, up_dp_bound, low_dp_bound, dp_vertex_constraints, final_x, final_y)

@@ -32,7 +32,7 @@ class Plotting:
         self.colors = [cmap(i) for i in np.linspace(0, 1, self.mission_num)]
         self.multi_plot_2D_static(self.paths)
         self.multi_plot_2D_dynamic()
-        # self.plot_show_DP_QP(self.DP_paths_all, self.QP_paths_all)
+        self.plot_show_DP_QP(self.DP_paths_all, self.QP_paths_all)
 
     def multi_plot_2D_dynamic(self):
         # self.plot_grid()
@@ -112,7 +112,7 @@ class Plotting:
         filename_gif = f'/home/tony/MAPF/Figures/animation_{self.mission_num}agents.gif'
         filename_mp4 = f'/home/tony/MAPF/Figures/animation_{self.mission_num}agents.mp4'
         # ani.save(filename_gif, writer='pillow')
-        ani.save(filename_mp4, writer='ffmpeg')
+        # ani.save(filename_mp4, writer='ffmpeg')
         plt.show()
 
 

@@ -7,7 +7,9 @@ def get_map_data():
     # ‘with’ makes sure that the file is closed automatically once the program exits the block
     filename_1 = '/home/tony/MAPF/MAP/warehouse-10-20-10-2-2.map'
     filename_2 = '/home/tony/MAPF/MAP/warehouse-test.map'
-    with open(filename_2, 'r') as file:
+    filename_3 = '/home/tony/MAPF/MAP/warehouse-gazebo.map'
+
+    with open(filename_3, 'r') as file:
         map_data = file.read()
 
     # Split the map into lines
