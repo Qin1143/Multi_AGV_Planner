@@ -24,7 +24,7 @@ ST_Astar + DP + QP
 <img src=https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/gazebo_warehouse.png>
 </div>
 <div style="display: flex; justify-content: space-between;">
-    <img src="https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/gazebo_starts_goals.png" alt="Image 1" width="350"/>
+    <img src="https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/gazebo_starts_goals.png" alt="Image 1" width="400"/>
     <img src="https://github.com/Qin1143/Multi_AGV_Planner/blob/main/Figures/gazebo_result_3D.png" alt="Image 2" width="400"/>
 </div>
 
