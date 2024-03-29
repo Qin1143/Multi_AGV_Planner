@@ -7,6 +7,11 @@ import os
 import sys
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+from matplotlib.cm import ScalarMappable
+from mpl_toolkits.mplot3d.art3d import Poly3DCollection
+import matplotlib.patches as patches
+from matplotlib import colors
+from mpl_toolkits.mplot3d import Axes3D
 from create_map import get_map_data
 import numpy as np
 
@@ -31,8 +36,49 @@ class Plotting:
         self.final_y = final_y
         self.colors = [cmap(i) for i in np.linspace(0, 1, self.mission_num)]
         self.multi_plot_2D_static(self.paths)
-        self.multi_plot_2D_dynamic()
-        self.plot_show_DP_QP(self.DP_paths_all, self.QP_paths_all)
+        # self.multi_plot_2D_dynamic()
+        # self.plot_show_DP_QP(self.DP_paths_all, self.QP_paths_all)
+        self.plot_xyt_result()
+
+    def plot_xyt_result(self):
+        fig = plt.figure(figsize=(8, 8))
+        ax = fig.add_subplot(111, projection='3d')
+
+        obs_x = [x[0] for x in self.obs]
+        obs_y = [x[1] for x in self.obs]
+
+        # 在xy平面内绘制障碍物
+        for x, y in zip(obs_x, obs_y):
+            # 创建一个立方体
+            z = 0  # z坐标
+            dx = dy = dz = 1  # 长度
+            cube = [(x - dx / 2, y - dy / 2, z), (x + dx / 2, y - dy / 2, z), (x + dx / 2, y + dy / 2, z),
+                    (x - dx / 2, y + dy / 2, z)]  # 底面的四个顶点
+            cube = [cube]  # 转换格式
+            ax.add_collection3d(Poly3DCollection(cube, facecolors='black', linewidths=0.5, edgecolors='black', alpha=0.2))
+
+        for i in range(self.mission_num):
+            x = self.final_x[i]
+            y = self.final_y[i]
+            zeros = np.zeros(len(x))
+            t2 = np.arange(0, len(x) * 0.01, 0.01)
+            ax.plot(x, y, zeros, linewidth='3', color=self.colors[i], alpha=0.5)
+            ax.plot(x, zeros, t2, linewidth='3', color=self.colors[i], alpha=0.2)
+            ax.plot(zeros, y, t2, linewidth='3', color=self.colors[i], alpha=0.2)
+            ax.plot(x, y, t2, linewidth='3', color=self.colors[i], alpha=1, label=f'Agent_{i+1}')
+            ax.plot(self.starts[i][0], self.starts[i][1], 0,color=self.colors[i], marker='o', markersize=8)
+            ax.plot(self.goals[i][0], self.goals[i][1], 0, color=self.colors[i], marker='^', markersize=8)
+        #设置坐标轴范围
+        ax.set_xlim(-0.5, self.width-0.5)
+        ax.set_ylim(-0.5, self.height-0.5)
+        max_t = max(len(v) for v in self.final_x.values()) * 0.01
+        ax.set_zlim(0, max_t)
+        ax.set_xlabel('X(m)')
+        ax.set_ylabel('Y(m)')
+        ax.set_zlabel('T(s)')
+
+        plt.legend()
+        plt.show()
 
     def multi_plot_2D_dynamic(self):
         # self.plot_grid()
@@ -117,8 +163,12 @@ class Plotting:
 
 
     def multi_plot_2D_static(self, paths):
+        #仅显示path
         self.plot_grid()
         self.plot_static_paths(paths)
+
+        #色阶显示
+        # self.plot_2D_t()
         plt.show()
 
     def plot_grid(self):
@@ -153,6 +203,39 @@ class Plotting:
             #         dy = path_y[j + 1] - path_y[j]
             #         plt.quiver(path_x[j], path_y[j], dx, dy, angles='xy', scale_units='xy', scale=1,
             #                    color=self.colors[i])
+
+    def plot_2D_t(self):
+        obs_x = [x[0] for x in self.obs]
+        obs_y = [x[1] for x in self.obs]
+        # plt.figure(figsize=(16, 12))
+        plt.figure(figsize=(8, 6))
+        # plt.get_current_fig_manager().full_screen_toggle()
+        for i in range(self.mission_num):
+            plt.plot(self.starts[i][0], self.starts[i][1], color=self.colors[i], marker='o', markersize=8)
+            plt.plot(self.goals[i][0], self.goals[i][1], color=self.colors[i], marker='^', markersize=8)
+            plt.annotate(str(i), (self.starts[i][0], self.starts[i][1]))
+        plt.plot(obs_x, obs_y, "sk", alpha=0.5)
+
+        # 创建一个ScalarMappable对象，用于将时间转换为颜色
+        cmap = plt.get_cmap("viridis")
+        norm = colors.Normalize(vmin=0, vmax=max(len(v) for v in self.final_x.values()) * 0.01)
+        sm = ScalarMappable(cmap=cmap, norm=norm)
+        sm.set_array([])
+        for i in range(self.mission_num):
+            x = self.final_x[i]
+            y = self.final_y[i]
+            t = np.arange(0, len(x) * 0.01, 0.01)
+            color_values = sm.to_rgba(t)
+
+            plt.scatter(x, y, linewidths=3, edgecolors=color_values, color=color_values, alpha=0.8,
+                        label=f'Agent_{i + 1}')
+        plt.legend()
+        plt.xlabel('X(m)')
+        plt.ylabel('Y(M)')
+        name = f'Multi_AGV_Planner_{self.mission_num}Agents'
+        plt.title(name)
+        plt.axis("equal")
+
 
     def plot_show_DP_QP(self, DP_paths_all, QP_paths_all):
         # 展示轨迹

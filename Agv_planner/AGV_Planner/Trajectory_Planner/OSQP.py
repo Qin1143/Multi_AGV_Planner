@@ -14,7 +14,7 @@ def qp_planner_osqp(dp_points_t, dp_points_s, v_max, v_min, start_state, end_sta
     # w2: cost_jerk
     # w3: cost_ref_s
     global is_collision
-    [w1, w2, w3] = [1, 1, 3]
+    [w1, w2, w3] = [1, 1, 20]
     start_collision_index = dict()
     end_collision_index = dict()
     speedup = dict()

@@ -1,3 +1,4 @@
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from typing import List, Tuple, Dict, Callable, Set
@@ -41,15 +42,21 @@ def get_map_data():
     return height, width, obstacle_coordinates
 
 def main():
+
+    starts = [(17, 6), (3, 7), (8, 2)]
+    goals = [(2, 16), (17, 12), (13, 17)]
+    cmap = plt.get_cmap("viridis")
+    colors = [cmap(i) for i in np.linspace(0, 1, len(starts))]
+
     # 依据height、width和obstacle_coordinates绘制地图
     height, width, obstacle_coordinates = get_map_data()
     print(type(obstacle_coordinates))
-    fig = plt.figure()
+    fig = plt.figure(figsize=(8, 8))
     ax = fig.add_subplot(111)
-    ax.set_xlim(0, width)
-    ax.set_ylim(0, height)
-    # ax.set_xticks(range(width))
-    # ax.set_yticks(range(height))
+    ax.set_xlim(-0.5, width-0.5)
+    ax.set_ylim(-0.5, height-0.5)
+    ax.set_xticks(np.arange(0.5, width, 1))
+    ax.set_yticks(np.arange(0.5, height, 1))
     total_cells = height * width
     obstacle_cells = len(obstacle_coordinates)
     obstacle_ratio = obstacle_cells / total_cells
@@ -58,10 +65,22 @@ def main():
     # 计算出障碍物占地的比例
     print(f"Obstacle ratio: {obstacle_ratio}")
 
+    # 绘制起点，用圆圈表示，颜色为红色
+    for i in range(len(starts)):
+        ax.plot(starts[i][0], starts[i][1], color=colors[i], marker='o', markersize=8)
+        ax.text(starts[i][0], starts[i][1], f'Start {i + 1}', ha='right')
+        ax.plot(goals[i][0], goals[i][1], color=colors[i], marker='^', markersize=8)
+        if i == 0:
+            ax.text(goals[i][0], goals[i][1], f'Goal {i + 1}', ha='left')
+        else:
+            ax.text(goals[i][0], goals[i][1], f'Goal {i + 1}', ha='right')
 
     ax.grid(True)
     for coordinate in obstacle_coordinates:
-        ax.add_patch(plt.Rectangle((coordinate[0], coordinate[1]), 1, 1, color='black'))
+        ax.add_patch(plt.Rectangle((coordinate[0]-0.5, coordinate[1]-0.5), 1, 1, color='black'))
+
+    plt.xlabel('X(m)')
+    plt.ylabel('Y(M)')
     plt.show()
 
 if __name__ == '__main__':
