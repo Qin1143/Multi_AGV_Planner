@@ -36,9 +36,9 @@ class Plotting:
         self.final_y = final_y
         self.colors = [cmap(i) for i in np.linspace(0, 1, self.mission_num)]
         self.multi_plot_2D_static(self.paths)
-        # self.multi_plot_2D_dynamic()
+        self.multi_plot_2D_dynamic()
         # self.plot_show_DP_QP(self.DP_paths_all, self.QP_paths_all)
-        self.plot_xyt_result()
+        # self.plot_xyt_result()
 
     def plot_xyt_result(self):
         fig = plt.figure(figsize=(8, 8))
@@ -62,7 +62,7 @@ class Plotting:
             y = self.final_y[i]
             zeros = np.zeros(len(x))
             t2 = np.arange(0, len(x) * 0.01, 0.01)
-            ax.plot(x, y, zeros, linewidth='3', color=self.colors[i], alpha=0.5)
+            ax.plot(x, y, zeros, linewidth='3', color=self.colors[i], alpha=0.7)
             ax.plot(x, zeros, t2, linewidth='3', color=self.colors[i], alpha=0.2)
             ax.plot(zeros, y, t2, linewidth='3', color=self.colors[i], alpha=0.2)
             ax.plot(x, y, t2, linewidth='3', color=self.colors[i], alpha=1, label=f'Agent_{i+1}')
@@ -156,9 +156,9 @@ class Plotting:
         interval = 1000 / (speed * frame_rate)  # 每帧之间的时间间隔，单位为毫秒
         ani = animation.FuncAnimation(fig, animate, init_func=init, frames=frames, interval=interval, blit=True) # interval=10表示每隔10ms更新一次，也是正常速度 interval=1表示十倍速
         filename_gif = f'/home/tony/MAPF/Figures/animation_{self.mission_num}agents.gif'
-        filename_mp4 = f'/home/tony/MAPF/Figures/animation_{self.mission_num}agents.mp4'
+        filename_mp4 = f'/home/tony/MAPF/Figures/animation_{self.mission_num}agents_gazebo.mp4'
         # ani.save(filename_gif, writer='pillow')
-        # ani.save(filename_mp4, writer='ffmpeg')
+        ani.save(filename_mp4, writer='ffmpeg')
         plt.show()
 
 

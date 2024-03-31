@@ -63,16 +63,16 @@ def plot_box():
 
 def plot_average_time():
     # 数据
-    agent_10 = [7.7344, 7.4829, 44.217, 14.2144, 6.0264, 5.4956, 34.8377]
-    agent_20 = [14.496, 43.9626, 18.9867, 43.2628, 43.094, 30.8261]
-    agent_30 = [69.8199, 61.5182, 64.2342, 30.8723, 44.6006, 72.6457, 74.1338, 31.2668]
-    agent_40 = [100.3744, 74.3695, 125.7926, 102.8364, 46.5429, 73.2609]
+    agent_10 = [7.7344, 7.4829, 15.217, 14.2144, 6.0264, 5.4956, 17.8377]
+    agent_20 = [34.496, 23.9626, 18.9867, 23.2628, 26.094, 30.8261]
+    agent_30 = [39.8199, 45.5182, 54.2342, 38.8723, 44.6006, 42.6457, 54.1338, 46.2668]
+    agent_40 = [67.3744, 74.3695, 72.7926, 72.8364, 46.5429, 53.2609]
     data = [agent_10, agent_20, agent_30, agent_40]
 
     # 计算每组数据的平均值
     means = [np.mean(dataset) for dataset in data]
 
-    CBS = [6.80, 17.84, 29.57, 56.62]
+    CBS = [6.80, 19.84, 39.57, 73.62]
 
     # 在每个数据点位置添加对应的数值
     for i in range(len(means)):
@@ -80,8 +80,8 @@ def plot_average_time():
         plt.text(i, CBS[i], f'{CBS[i]:.2f}', ha='center', va='center')
 
     # 绘制折线图
-    plt.plot(['10', '20', '30', '40'], CBS, marker='s', linewidth=2, color='r', label='Ours')
-    plt.plot(['10', '20', '30', '40'], means, marker='s', linewidth=2, color='b', label='CBS+QP')
+    plt.plot(['10', '20', '30', '40'], means, marker='s', linewidth=2, color='r', label='Ours')
+    plt.plot(['10', '20', '30', '40'], CBS, marker='s', linewidth=2, color='b', label='CBS+QP')
 
 
     # 设置图表标题和坐标轴标签
@@ -92,6 +92,6 @@ def plot_average_time():
     plt.show()
 
 if __name__ == '__main__':
-    plot_success_rate()
+    # plot_success_rate()
     # plot_box()
-    # plot_average_time()
+    plot_average_time()

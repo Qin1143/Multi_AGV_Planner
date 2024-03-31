@@ -100,6 +100,7 @@ class Planner:
         # 目的是将values中的列表转换为numpy数组
         # Assume dynamic obstacles are agents with same radius, distance needs to be 2*radius 用于判断给定的位置和时间是否安全
         def safe_dynamic(grid_pos: np.ndarray, gride_angle: float, time: int) -> Tuple[bool, bool]:  # 1,是否与动态障碍物绝对安全 2,是否通过轨迹规划解决
+            # 这块有大问题，还没改呢！！！！！！！！！！
             # nonlocal dynamic_obstacles # 非局部变量dynamic_obstacles
             # print("gride_angle: ", gride_angle)
             for obstacle in self.dynamic_obstacles.setdefault(time, np.array([])):
