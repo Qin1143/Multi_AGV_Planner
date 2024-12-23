@@ -1,7 +1,7 @@
 # Multi_AGV_Planner
 This project is for multi AGV path planning in an automated warehouse.
 
-:warning: The complete code of this project will be presented after the paper is accepted.
+:warning: **The complete code of this project will be presented after the paper is accepted.** :warning:
 
 ST_Astar + DP + QP
 
