@@ -1,5 +1,7 @@
 # Multi_AGV_Planner
-Just about my master works, including global planner, trajectory planner, decision algorithm and so on. 
+This project is for multi AGV path planning in an automated warehouse.
+
+:warning: The complete code of this project will be presented after the paper is accepted.
 
 ST_Astar + DP + QP
 
